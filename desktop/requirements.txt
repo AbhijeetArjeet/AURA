@@ -1,0 +1,5 @@
+yt-dlp
+PyQt6
+requests
+Pillow
+pyinstaller
