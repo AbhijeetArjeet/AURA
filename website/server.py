@@ -294,9 +294,18 @@ def _run_download(job_id, url, container, quality):
         jobs[job_id]["status"]   = "done"
         jobs[job_id]["progress"] = 100
 
+    except yt_dlp.utils.DownloadError as e:
+        error_msg = str(e)
+        if "Requested format is not available" in error_msg or "Sign in to confirm you’re not a bot" in error_msg:
+            jobs[job_id]["status"] = "error"
+            jobs[job_id]["error"]  = "YouTube Bot Detection blocked the download. Please upload active YouTube cookies via the 'Sign In' button to bypass this."
+        else:
+            jobs[job_id]["status"] = "error"
+            jobs[job_id]["error"]  = error_msg
     except Exception as e:
         jobs[job_id]["status"] = "error"
         jobs[job_id]["error"]  = str(e)
+
 
 
 # ═════════════════════════════════════════════════════════════════════════════
