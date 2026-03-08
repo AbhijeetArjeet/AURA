@@ -16,6 +16,7 @@ desktop/__pycache__/
 
 # Downloads folder (user files)
 website/downloads/
+website/cookies.txt
 
 # IDE
 .idea/

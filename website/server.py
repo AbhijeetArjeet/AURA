@@ -9,6 +9,7 @@ import threading
 import yt_dlp
 from flask import Flask, request, jsonify, send_file, send_from_directory, abort
 from flask_cors import CORS
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__, static_folder="static")
 CORS(app)
@@ -21,6 +22,9 @@ os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 # ─── PO Token (Proof of Origin) — bypasses YouTube bot detection ─────────────
 PO_TOKEN       = os.environ.get("PO_TOKEN", "")
 VISITOR_DATA   = os.environ.get("VISITOR_DATA", "")
+
+# ─── Cookie file (backup auth) ───────────────────────────────────────────────
+COOKIES_FILE   = os.path.join(os.path.dirname(__file__), "cookies.txt")
 
 # In-memory job tracker
 jobs = {}  # job_id -> { status, progress, speed, eta, file_path, error, title }
@@ -40,7 +44,7 @@ AUDIO_FORMATS = {"mp3", "m4a", "flac", "wav", "ogg", "opus"}
 
 
 def _base_opts():
-    """Return common yt-dlp options including PO token if configured."""
+    """Return common yt-dlp options with auth (cookies > PO token > none)."""
     opts = {
         "quiet":        True,
         "no_warnings":  True,
@@ -48,8 +52,13 @@ def _base_opts():
     }
     if FFMPEG_PATH:
         opts["ffmpeg_location"] = FFMPEG_PATH
-    # YouTube Proof-of-Origin token — lets cloud servers bypass bot detection
-    if PO_TOKEN and VISITOR_DATA:
+
+    # Priority 1: Cookie file (most reliable)
+    if os.path.isfile(COOKIES_FILE):
+        opts["cookiefile"] = COOKIES_FILE
+
+    # Priority 2: PO Token (Proof of Origin)
+    elif PO_TOKEN and VISITOR_DATA:
         opts["extractor_args"] = {
             "youtube": {
                 "player_client": ["web"],
@@ -72,6 +81,53 @@ def index():
 @app.route("/<path:path>")
 def static_files(path):
     return send_from_directory("static", path)
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+#  API — Cookie Upload (backup auth)
+# ═════════════════════════════════════════════════════════════════════════════
+
+@app.route("/api/upload-cookies", methods=["POST"])
+def api_upload_cookies():
+    """Accept a Netscape-format cookies.txt file for YouTube auth."""
+    if "file" not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+
+    f = request.files["file"]
+    if not f.filename:
+        return jsonify({"error": "Empty filename"}), 400
+
+    content = f.read().decode("utf-8", errors="ignore")
+
+    # Basic validation — Netscape cookies start with a comment or domain lines
+    if not ("youtube.com" in content.lower() or "google.com" in content.lower()):
+        return jsonify({"error": "This doesn't look like a YouTube cookies file. "
+                                 "Make sure you export cookies from youtube.com"}), 400
+
+    with open(COOKIES_FILE, "w", encoding="utf-8") as out:
+        out.write(content)
+
+    return jsonify({"ok": True, "message": "Cookies uploaded! YouTube auth is now active."})
+
+
+@app.route("/api/auth-status")
+def api_auth_status():
+    """Return current authentication status."""
+    has_cookies = os.path.isfile(COOKIES_FILE)
+    has_po = bool(PO_TOKEN and VISITOR_DATA)
+    return jsonify({
+        "method": "cookies" if has_cookies else ("po_token" if has_po else "none"),
+        "authenticated": has_cookies or has_po,
+    })
+
+
+@app.route("/api/clear-cookies", methods=["POST"])
+def api_clear_cookies():
+    """Remove uploaded cookies."""
+    if os.path.isfile(COOKIES_FILE):
+        os.remove(COOKIES_FILE)
+    return jsonify({"ok": True, "message": "Cookies removed."})
+
 
 
 # ═════════════════════════════════════════════════════════════════════════════

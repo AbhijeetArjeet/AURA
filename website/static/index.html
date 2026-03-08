@@ -1,245 +1,314 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="YPDlp — Free YouTube video and audio downloader. Download 4K, 1080p, MP4, MKV, MP3 and more.">
+    <meta name="description"
+        content="YPDlp — Free YouTube video and audio downloader. Download 4K, 1080p, MP4, MKV, MP3 and more.">
     <title>YPDlp — YouTube Video & Audio Downloader</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<!-- ═══════ NAVBAR ═══════ -->
-<nav class="navbar" id="navbar">
-    <div class="nav-container">
-        <a href="/" class="nav-logo">
-            <span class="logo-icon">▶</span>
-            <span class="logo-text">YPDlp</span>
-        </a>
-        <div class="nav-links">
-            <a href="#downloader" class="nav-link">Download</a>
-            <a href="#features" class="nav-link">Features</a>
-            <a href="#formats" class="nav-link">Formats</a>
-            <a href="https://github.com" class="nav-link nav-github" target="_blank">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-                GitHub
+    <!-- ═══════ NAVBAR ═══════ -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">
+                <span class="logo-icon">▶</span>
+                <span class="logo-text">YPDlp</span>
+            </a>
+            <div class="nav-links">
+                <a href="#downloader" class="nav-link">Download</a>
+                <a href="#features" class="nav-link">Features</a>
+                <a href="#formats" class="nav-link">Formats</a>
+                <button id="authBtn" class="nav-link nav-auth-btn" onclick="toggleAuthPanel()">
+                    <span id="authDot" class="auth-dot"></span>
+                    <span id="authLabel">Sign In</span>
+                </button>
+                <a href="https://github.com/AbhijeetArjeet/yt_downloader" class="nav-link nav-github" target="_blank">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+                    </svg>
+                    GitHub
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ═══════ HERO SECTION ═══════ -->
+    <section class="hero">
+        <div class="hero-bg">
+            <div class="hero-gradient"></div>
+            <div class="hero-particles" id="particles"></div>
+        </div>
+        <div class="hero-content">
+            <div class="hero-badge">⚡ Powered by yt-dlp</div>
+            <h1 class="hero-title">
+                Download <span class="text-gradient">YouTube</span> Videos<br>
+                in <span class="text-gradient">4K Quality</span>
+            </h1>
+            <p class="hero-sub">
+                Free, fast & unlimited. MP4 • MKV • MP3 • FLAC and 10+ formats.
+                No ads. No signup. Just paste and download.
+            </p>
+            <a href="#downloader" class="hero-cta">
+                <span>Start Downloading</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M12 5v14M19 12l-7 7-7-7" />
+                </svg>
             </a>
         </div>
-    </div>
-</nav>
+    </section>
 
-<!-- ═══════ HERO SECTION ═══════ -->
-<section class="hero">
-    <div class="hero-bg">
-        <div class="hero-gradient"></div>
-        <div class="hero-particles" id="particles"></div>
-    </div>
-    <div class="hero-content">
-        <div class="hero-badge">⚡ Powered by yt-dlp</div>
-        <h1 class="hero-title">
-            Download <span class="text-gradient">YouTube</span> Videos<br>
-            in <span class="text-gradient">4K Quality</span>
-        </h1>
-        <p class="hero-sub">
-            Free, fast & unlimited. MP4 • MKV • MP3 • FLAC and 10+ formats.
-            No ads. No signup. Just paste and download.
-        </p>
-        <a href="#downloader" class="hero-cta">
-            <span>Start Downloading</span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
-        </a>
-    </div>
-</section>
+    <!-- ═══════ DOWNLOADER ═══════ -->
+    <section class="downloader" id="downloader">
+        <div class="container">
+            <!-- URL Input -->
+            <div class="dl-card glass-card">
+                <div class="dl-header">
+                    <div class="dl-icon">🔗</div>
+                    <h2>Paste Video URL</h2>
+                </div>
+                <div class="url-row">
+                    <input type="text" id="urlInput" class="url-input" placeholder="https://youtube.com/watch?v=..."
+                        autocomplete="off">
+                    <button id="fetchBtn" class="btn btn-red" onclick="fetchInfo()">
+                        <span class="btn-text">Fetch Info</span>
+                        <span class="btn-loader" hidden></span>
+                    </button>
+                </div>
+                <div id="errorMsg" class="error-msg" hidden></div>
+            </div>
 
-<!-- ═══════ DOWNLOADER ═══════ -->
-<section class="downloader" id="downloader">
-    <div class="container">
-        <!-- URL Input -->
-        <div class="dl-card glass-card">
-            <div class="dl-header">
-                <div class="dl-icon">🔗</div>
-                <h2>Paste Video URL</h2>
+            <!-- Video Info Card (hidden initially) -->
+            <div id="infoCard" class="info-card glass-card" hidden>
+                <div class="info-thumb-wrap">
+                    <img id="infoThumb" class="info-thumb" src="" alt="thumbnail">
+                    <span id="infoDuration" class="info-duration">00:00</span>
+                </div>
+                <div class="info-details">
+                    <h3 id="infoTitle" class="info-title">—</h3>
+                    <p id="infoChannel" class="info-channel">—</p>
+                    <p id="infoViews" class="info-views">—</p>
+                </div>
             </div>
-            <div class="url-row">
-                <input type="text" id="urlInput" class="url-input"
-                    placeholder="https://youtube.com/watch?v=..." autocomplete="off">
-                <button id="fetchBtn" class="btn btn-red" onclick="fetchInfo()">
-                    <span class="btn-text">Fetch Info</span>
-                    <span class="btn-loader" hidden></span>
-                </button>
-            </div>
-            <div id="errorMsg" class="error-msg" hidden></div>
-        </div>
 
-        <!-- Video Info Card (hidden initially) -->
-        <div id="infoCard" class="info-card glass-card" hidden>
-            <div class="info-thumb-wrap">
-                <img id="infoThumb" class="info-thumb" src="" alt="thumbnail">
-                <span id="infoDuration" class="info-duration">00:00</span>
-            </div>
-            <div class="info-details">
-                <h3 id="infoTitle" class="info-title">—</h3>
-                <p id="infoChannel" class="info-channel">—</p>
-                <p id="infoViews" class="info-views">—</p>
-            </div>
-        </div>
-
-        <!-- Format Selector (hidden initially) -->
-        <div id="formatCard" class="format-card glass-card" hidden>
-            <div class="format-grid">
-                <!-- Type toggle -->
-                <div class="format-group">
-                    <label class="format-label">Type</label>
-                    <div class="toggle-group" id="typeToggle">
-                        <button class="toggle-btn active" data-value="video" onclick="setType('video')">🎬 Video</button>
-                        <button class="toggle-btn" data-value="audio" onclick="setType('audio')">🎵 Audio</button>
+            <!-- Format Selector (hidden initially) -->
+            <div id="formatCard" class="format-card glass-card" hidden>
+                <div class="format-grid">
+                    <!-- Type toggle -->
+                    <div class="format-group">
+                        <label class="format-label">Type</label>
+                        <div class="toggle-group" id="typeToggle">
+                            <button class="toggle-btn active" data-value="video" onclick="setType('video')">🎬
+                                Video</button>
+                            <button class="toggle-btn" data-value="audio" onclick="setType('audio')">🎵 Audio</button>
+                        </div>
+                    </div>
+                    <!-- Quality -->
+                    <div class="format-group" id="qualityGroup">
+                        <label class="format-label">Quality</label>
+                        <select id="qualitySelect" class="format-select">
+                            <option value="best">Best Available</option>
+                            <option value="2160p">4K (2160p)</option>
+                            <option value="1440p">2K (1440p)</option>
+                            <option value="1080p" selected>1080p</option>
+                            <option value="720p">720p</option>
+                            <option value="480p">480p</option>
+                            <option value="360p">360p</option>
+                        </select>
+                    </div>
+                    <!-- Container -->
+                    <div class="format-group">
+                        <label class="format-label">Format</label>
+                        <select id="formatSelect" class="format-select"></select>
                     </div>
                 </div>
-                <!-- Quality -->
-                <div class="format-group" id="qualityGroup">
-                    <label class="format-label">Quality</label>
-                    <select id="qualitySelect" class="format-select">
-                        <option value="best">Best Available</option>
-                        <option value="2160p">4K (2160p)</option>
-                        <option value="1440p">2K (1440p)</option>
-                        <option value="1080p" selected>1080p</option>
-                        <option value="720p">720p</option>
-                        <option value="480p">480p</option>
-                        <option value="360p">360p</option>
-                    </select>
-                </div>
-                <!-- Container -->
-                <div class="format-group">
-                    <label class="format-label">Format</label>
-                    <select id="formatSelect" class="format-select"></select>
-                </div>
+                <button id="downloadBtn" class="btn btn-red btn-lg" onclick="startDownload()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <path d="M12 5v14M19 12l-7 7-7-7" />
+                    </svg>
+                    <span>Download Now</span>
+                </button>
             </div>
-            <button id="downloadBtn" class="btn btn-red btn-lg" onclick="startDownload()">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
-                <span>Download Now</span>
-            </button>
-        </div>
 
-        <!-- Download Progress (hidden initially) -->
-        <div id="progressCard" class="progress-card glass-card" hidden>
-            <div class="progress-header">
-                <span class="progress-icon">⏳</span>
-                <h3 id="progressTitle">Downloading…</h3>
+            <!-- Download Progress (hidden initially) -->
+            <div id="progressCard" class="progress-card glass-card" hidden>
+                <div class="progress-header">
+                    <span class="progress-icon">⏳</span>
+                    <h3 id="progressTitle">Downloading…</h3>
+                </div>
+                <div class="progress-bar-wrap">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div class="progress-stats">
+                    <span id="progressPct">0%</span>
+                    <span id="progressSpeed">—</span>
+                    <span id="progressEta">ETA —</span>
+                </div>
             </div>
-            <div class="progress-bar-wrap">
-                <div class="progress-bar" id="progressBar"></div>
-            </div>
-            <div class="progress-stats">
-                <span id="progressPct">0%</span>
-                <span id="progressSpeed">—</span>
-                <span id="progressEta">ETA —</span>
+
+            <!-- Done Card (hidden initially) -->
+            <div id="doneCard" class="done-card glass-card" hidden>
+                <div class="done-icon">✅</div>
+                <h3 class="done-title">Download Complete!</h3>
+                <p id="doneFilename" class="done-filename"></p>
+                <a id="doneLink" class="btn btn-red btn-lg" href="" download>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                    </svg>
+                    <span>Save File</span>
+                </a>
+                <button class="btn btn-outline" onclick="resetUI()">Download Another</button>
             </div>
         </div>
+    </section>
 
-        <!-- Done Card (hidden initially) -->
-        <div id="doneCard" class="done-card glass-card" hidden>
-            <div class="done-icon">✅</div>
-            <h3 class="done-title">Download Complete!</h3>
-            <p id="doneFilename" class="done-filename"></p>
-            <a id="doneLink" class="btn btn-red btn-lg" href="" download>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-                <span>Save File</span>
-            </a>
-            <button class="btn btn-outline" onclick="resetUI()">Download Another</button>
+    <!-- ═══════ FEATURES ═══════ -->
+    <section class="features" id="features">
+        <div class="container">
+            <h2 class="section-title">Why <span class="text-gradient">YPDlp</span>?</h2>
+            <div class="features-grid">
+                <div class="feature-card glass-card">
+                    <div class="feature-icon">🎬</div>
+                    <h3>4K Ultra HD</h3>
+                    <p>Download in full 4K 2160p quality. We support all resolutions down to 360p.</p>
+                </div>
+                <div class="feature-card glass-card">
+                    <div class="feature-icon">🎵</div>
+                    <h3>Audio Extraction</h3>
+                    <p>Extract audio in MP3, FLAC, WAV, OGG, OPUS and M4A with best quality.</p>
+                </div>
+                <div class="feature-card glass-card">
+                    <div class="feature-icon">📦</div>
+                    <h3>Multiple Formats</h3>
+                    <p>MP4, MKV, WEBM, AVI and 6 audio formats. Pick the one you need.</p>
+                </div>
+                <div class="feature-card glass-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Lightning Fast</h3>
+                    <p>Powered by yt-dlp with multi-threaded downloads. Maximum speed, always.</p>
+                </div>
+                <div class="feature-card glass-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>No Ads, No Signup</h3>
+                    <p>Completely free and open-source. No tracking, no registration needed.</p>
+                </div>
+                <div class="feature-card glass-card">
+                    <div class="feature-icon">📱</div>
+                    <h3>Multi-Platform</h3>
+                    <p>Available as a Web app, Windows desktop app, and Android app.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════ FORMATS ═══════ -->
+    <section class="formats" id="formats">
+        <div class="container">
+            <h2 class="section-title">Supported <span class="text-gradient">Formats</span></h2>
+            <div class="formats-row">
+                <div class="format-table glass-card">
+                    <h3>🎬 Video</h3>
+                    <div class="format-badges">
+                        <span class="badge badge-red">MP4</span>
+                        <span class="badge badge-red">MKV</span>
+                        <span class="badge badge-red">WEBM</span>
+                        <span class="badge badge-red">AVI</span>
+                    </div>
+                    <p class="format-note">Qualities: 4K • 2K • 1080p • 720p • 480p • 360p</p>
+                </div>
+                <div class="format-table glass-card">
+                    <h3>🎵 Audio</h3>
+                    <div class="format-badges">
+                        <span class="badge badge-accent">MP3</span>
+                        <span class="badge badge-accent">M4A</span>
+                        <span class="badge badge-accent">FLAC</span>
+                        <span class="badge badge-accent">WAV</span>
+                        <span class="badge badge-accent">OGG</span>
+                        <span class="badge badge-accent">OPUS</span>
+                    </div>
+                    <p class="format-note">Best quality audio extraction with FFmpeg</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════ FOOTER ═══════ -->
+    <footer class="footer">
+        <div class="container footer-inner">
+            <div class="footer-brand">
+                <span class="logo-icon">▶</span> <strong>YPDlp</strong>
+                <span class="footer-sep">·</span>
+                Open-source YouTube Downloader
+            </div>
+            <div class="footer-links">
+                <a href="https://github.com/AbhijeetArjeet/yt_downloader" target="_blank">GitHub</a>
+                <span class="footer-sep">·</span>
+                <a href="#downloader">Download</a>
+                <span class="footer-sep">·</span>
+                <span class="footer-copy">© 2026</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ═══════ AUTH MODAL ═══════ -->
+    <div id="authModal" class="auth-modal" hidden>
+        <div class="auth-modal-backdrop" onclick="toggleAuthPanel()"></div>
+        <div class="auth-panel glass-card">
+            <div class="auth-header">
+                <h3>🔐 YouTube Authentication</h3>
+                <button class="auth-close" onclick="toggleAuthPanel()">✕</button>
+            </div>
+            <p class="auth-desc">
+                Upload your YouTube cookies to bypass bot detection.
+                This lets the server download videos as if from your browser.
+            </p>
+
+            <div id="authStatusBox" class="auth-status-box">
+                <span id="authStatusIcon">⚪</span>
+                <span id="authStatusText">Checking...</span>
+            </div>
+
+            <div class="auth-upload-area" id="dropZone">
+                <input type="file" id="cookieFileInput" accept=".txt" hidden>
+                <div class="upload-icon">📂</div>
+                <p><strong>Drop cookies.txt here</strong> or <a href="#"
+                        onclick="document.getElementById('cookieFileInput').click(); return false;">browse</a></p>
+                <p class="auth-hint">Export from Chrome using <a
+                        href="https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc"
+                        target="_blank">Get cookies.txt LOCALLY</a> extension</p>
+            </div>
+
+            <div id="authMsg" class="auth-msg" hidden></div>
+
+            <div class="auth-actions">
+                <button class="btn btn-outline btn-sm" onclick="clearCookies()">🗑️ Clear Cookies</button>
+            </div>
+
+            <div class="auth-steps">
+                <h4>How to get cookies:</h4>
+                <ol>
+                    <li>Install <a
+                            href="https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc"
+                            target="_blank">"Get cookies.txt LOCALLY"</a> Chrome extension</li>
+                    <li>Go to <strong>youtube.com</strong> and sign in</li>
+                    <li>Click the extension → <strong>Export</strong></li>
+                    <li>Upload the downloaded <code>cookies.txt</code> file here</li>
+                </ol>
+            </div>
         </div>
     </div>
-</section>
 
-<!-- ═══════ FEATURES ═══════ -->
-<section class="features" id="features">
-    <div class="container">
-        <h2 class="section-title">Why <span class="text-gradient">YPDlp</span>?</h2>
-        <div class="features-grid">
-            <div class="feature-card glass-card">
-                <div class="feature-icon">🎬</div>
-                <h3>4K Ultra HD</h3>
-                <p>Download in full 4K 2160p quality. We support all resolutions down to 360p.</p>
-            </div>
-            <div class="feature-card glass-card">
-                <div class="feature-icon">🎵</div>
-                <h3>Audio Extraction</h3>
-                <p>Extract audio in MP3, FLAC, WAV, OGG, OPUS and M4A with best quality.</p>
-            </div>
-            <div class="feature-card glass-card">
-                <div class="feature-icon">📦</div>
-                <h3>Multiple Formats</h3>
-                <p>MP4, MKV, WEBM, AVI and 6 audio formats. Pick the one you need.</p>
-            </div>
-            <div class="feature-card glass-card">
-                <div class="feature-icon">⚡</div>
-                <h3>Lightning Fast</h3>
-                <p>Powered by yt-dlp with multi-threaded downloads. Maximum speed, always.</p>
-            </div>
-            <div class="feature-card glass-card">
-                <div class="feature-icon">🔒</div>
-                <h3>No Ads, No Signup</h3>
-                <p>Completely free and open-source. No tracking, no registration needed.</p>
-            </div>
-            <div class="feature-card glass-card">
-                <div class="feature-icon">📱</div>
-                <h3>Multi-Platform</h3>
-                <p>Available as a Web app, Windows desktop app, and Android app.</p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- ═══════ FORMATS ═══════ -->
-<section class="formats" id="formats">
-    <div class="container">
-        <h2 class="section-title">Supported <span class="text-gradient">Formats</span></h2>
-        <div class="formats-row">
-            <div class="format-table glass-card">
-                <h3>🎬 Video</h3>
-                <div class="format-badges">
-                    <span class="badge badge-red">MP4</span>
-                    <span class="badge badge-red">MKV</span>
-                    <span class="badge badge-red">WEBM</span>
-                    <span class="badge badge-red">AVI</span>
-                </div>
-                <p class="format-note">Qualities: 4K • 2K • 1080p • 720p • 480p • 360p</p>
-            </div>
-            <div class="format-table glass-card">
-                <h3>🎵 Audio</h3>
-                <div class="format-badges">
-                    <span class="badge badge-accent">MP3</span>
-                    <span class="badge badge-accent">M4A</span>
-                    <span class="badge badge-accent">FLAC</span>
-                    <span class="badge badge-accent">WAV</span>
-                    <span class="badge badge-accent">OGG</span>
-                    <span class="badge badge-accent">OPUS</span>
-                </div>
-                <p class="format-note">Best quality audio extraction with FFmpeg</p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- ═══════ FOOTER ═══════ -->
-<footer class="footer">
-    <div class="container footer-inner">
-        <div class="footer-brand">
-            <span class="logo-icon">▶</span> <strong>YPDlp</strong>
-            <span class="footer-sep">·</span>
-            Open-source YouTube Downloader
-        </div>
-        <div class="footer-links">
-            <a href="https://github.com" target="_blank">GitHub</a>
-            <span class="footer-sep">·</span>
-            <a href="#downloader">Download</a>
-            <span class="footer-sep">·</span>
-            <span class="footer-copy">© 2026</span>
-        </div>
-    </div>
-</footer>
-
-<script src="app.js"></script>
+    <script src="app.js"></script>
 </body>
+
 </html>
