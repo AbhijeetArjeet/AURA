@@ -888,6 +888,10 @@ body {
     justify-content: center;
 }
 
+.auth-modal[hidden] {
+    display: none !important;
+}
+
 .auth-modal-backdrop {
     position: absolute;
     inset: 0;
