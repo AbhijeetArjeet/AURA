@@ -29,8 +29,8 @@ FFMPEG_PATH    = os.environ.get("FFMPEG_PATH", "")  # Set env var or leave empty
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
 # ─── PO Token (Proof of Origin) — bypasses YouTube bot detection ─────────────
-PO_TOKEN       = os.environ.get("PO_TOKEN", "")
-VISITOR_DATA   = os.environ.get("VISITOR_DATA", "")
+GLOBAL_PO_TOKEN     = os.environ.get("PO_TOKEN", "")
+GLOBAL_VISITOR_DATA = os.environ.get("VISITOR_DATA", "")
 
 # ─── Cookie file (backup auth) ───────────────────────────────────────────────
 COOKIES_FILE   = os.path.join(os.path.dirname(__file__), "cookies.txt")
@@ -67,14 +67,24 @@ def _base_opts():
         opts["cookiefile"] = COOKIES_FILE
 
     # Priority 2: PO Token (Proof of Origin)
-    elif PO_TOKEN and VISITOR_DATA:
+    elif GLOBAL_PO_TOKEN:
         opts["extractor_args"] = {
             "youtube": {
                 "player_client": ["web"],
-                "po_token":      [f"web+{PO_TOKEN}"],
+                "po_token":      [f"web+{GLOBAL_PO_TOKEN}"],
             }
         }
-        opts["extractor_args"]["youtube"]["visitor_data"] = [VISITOR_DATA]
+        if GLOBAL_VISITOR_DATA:
+            opts["extractor_args"]["youtube"]["visitor_data"] = [GLOBAL_VISITOR_DATA]
+    
+    # Priority 3: iOS / TV bypass if no PO token available
+    else:
+        opts["extractor_args"] = {
+            "youtube": {
+                "player_client": ["ios", "tv"]
+            }
+        }
+
     return opts
 
 
@@ -124,10 +134,18 @@ def api_auth_status():
     """Return current authentication status."""
     try:
         has_cookies = os.path.isfile(COOKIES_FILE)
-        has_po = bool(PO_TOKEN and VISITOR_DATA)
+        has_po = bool(GLOBAL_PO_TOKEN)
+        
+        status_method = "none"
+        if has_cookies and has_po: status_method = "both"
+        elif has_cookies: status_method = "cookies"
+        elif has_po: status_method = "po_token"
+        
         return jsonify({
-            "method": "cookies" if has_cookies else ("po_token" if has_po else "none"),
+            "method": status_method,
             "authenticated": has_cookies or has_po,
+            "po_token": GLOBAL_PO_TOKEN,
+            "visitor_data": GLOBAL_VISITOR_DATA
         })
     except Exception as e:
         print(f"Auth status check error: {e}")
@@ -137,13 +155,25 @@ def api_auth_status():
             "error": str(e)
         })
 
+@app.route("/api/set-po", methods=["POST"])
+def api_set_po():
+    """Receive PO Token and Visitor Data from UI."""
+    global GLOBAL_PO_TOKEN, GLOBAL_VISITOR_DATA
+    data = request.get_json(force=True)
+    GLOBAL_PO_TOKEN = data.get("po_token", "").strip()
+    GLOBAL_VISITOR_DATA = data.get("visitor_data", "").strip()
+    return jsonify({"ok": True, "message": "Tokens saved."})
+
 
 @app.route("/api/clear-cookies", methods=["POST"])
 def api_clear_cookies():
     """Remove uploaded cookies."""
+    global GLOBAL_PO_TOKEN, GLOBAL_VISITOR_DATA
     if os.path.isfile(COOKIES_FILE):
         os.remove(COOKIES_FILE)
-    return jsonify({"ok": True, "message": "Cookies removed."})
+    GLOBAL_PO_TOKEN = ""
+    GLOBAL_VISITOR_DATA = ""
+    return jsonify({"ok": True, "message": "Cookies and Tokens removed."})
 
 
 

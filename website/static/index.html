@@ -288,10 +288,24 @@
                         target="_blank">Get cookies.txt LOCALLY</a> extension</p>
             </div>
 
+            <div class="po-token-area">
+                <p class="auth-hint" style="margin-top: 15px;"><strong>Still getting Bot errors?</strong> YouTube also
+                    requires a PO Token now.<br>Generate it using <a
+                        href="https://github.com/YunzheZJU/youtube-po-token-generator" target="_blank">PO Token
+                        Generator</a></p>
+                <input type="text" id="visitorDataInput" class="url-input"
+                    style="margin-top: 5px; font-size: 13px; padding: 0.5rem;"
+                    placeholder="VISITOR_DATA (e.g. GxwTnzVc92A...)">
+                <input type="text" id="poTokenInput" class="url-input"
+                    style="margin-top: 5px; font-size: 13px; padding: 0.5rem;" placeholder="PO_TOKEN (e.g. MnQd...)">
+                <button class="btn btn-red btn-sm" style="margin-top: 10px; width: 100%;" onclick="savePoToken()">💾
+                    Save PO Token</button>
+            </div>
+
             <div id="authMsg" class="auth-msg" hidden></div>
 
-            <div class="auth-actions">
-                <button class="btn btn-outline btn-sm" onclick="clearCookies()">🗑️ Clear Cookies</button>
+            <div class="auth-actions" style="margin-top: 15px;">
+                <button class="btn btn-outline btn-sm" onclick="clearCookies()">🗑️ Clear Cookies & Tokens</button>
             </div>
 
             <div class="auth-steps">

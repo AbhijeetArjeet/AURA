@@ -276,11 +276,19 @@ async function checkAuthStatus() {
         const label = document.getElementById("authLabel");
 
         if (data.authenticated) {
-            const method = data.method === "cookies" ? "Cookies" : "PO Token";
+            let method = data.method;
+            if (method === "both") method = "Cookies + PO Token";
+            else if (method === "cookies") method = "Cookies";
+            else if (method === "po_token") method = "PO Token";
+
             icon.textContent = "🟢";
             text.textContent = `Authenticated via ${method}`;
             dot.className = "auth-dot auth-dot-green";
             label.textContent = "Signed In";
+
+            // Populate inputs if backend sent them
+            if (data.visitor_data) document.getElementById("visitorDataInput").value = data.visitor_data;
+            if (data.po_token) document.getElementById("poTokenInput").value = data.po_token;
         } else {
             icon.textContent = "🔴";
             text.textContent = "Not authenticated — YouTube may block downloads";
@@ -337,9 +345,45 @@ async function clearCookies() {
         const msgEl = document.getElementById("authMsg");
         msgEl.hidden = false;
         msgEl.className = "auth-msg auth-msg-info";
-        msgEl.textContent = "Cookies cleared.";
+        msgEl.textContent = "Cookies and Tokens cleared.";
+        document.getElementById("visitorDataInput").value = "";
+        document.getElementById("poTokenInput").value = "";
         checkAuthStatus();
     } catch { }
+}
+
+async function savePoToken() {
+    const vd = document.getElementById("visitorDataInput").value.trim();
+    const po = document.getElementById("poTokenInput").value.trim();
+
+    const msgEl = document.getElementById("authMsg");
+    msgEl.hidden = false;
+
+    if (!po) {
+        msgEl.className = "auth-msg auth-msg-error";
+        msgEl.textContent = "✘ Please enter at least a PO_TOKEN";
+        return;
+    }
+
+    msgEl.className = "auth-msg auth-msg-info";
+    msgEl.textContent = "Saving token...";
+
+    try {
+        const resp = await fetch(`${API}/api/set-po`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ visitor_data: vd, po_token: po }),
+        });
+        const data = await parseResponse(resp);
+        if (!resp.ok) throw new Error(data.error || "Failed");
+
+        msgEl.className = "auth-msg auth-msg-success";
+        msgEl.textContent = "✔ PO Token saved! YouTube auth active.";
+        checkAuthStatus();
+    } catch (err) {
+        msgEl.className = "auth-msg auth-msg-error";
+        msgEl.textContent = "✘ " + err.message;
+    }
 }
 
 // Check auth on page load
