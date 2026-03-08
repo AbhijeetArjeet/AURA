@@ -10,9 +10,18 @@ import yt_dlp
 from flask import Flask, request, jsonify, send_file, send_from_directory, abort
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
+from werkzeug.exceptions import HTTPException
 
 app = Flask(__name__, static_folder="static")
 CORS(app)
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    if isinstance(e, HTTPException):
+        return jsonify({"error": e.description}), e.code
+    import traceback
+    traceback.print_exc()
+    return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500
 
 # ─── Config ──────────────────────────────────────────────────────────────────
 DOWNLOAD_DIR   = os.path.join(os.path.dirname(__file__), "downloads")
@@ -32,12 +41,12 @@ jobs = {}  # job_id -> { status, progress, speed, eta, file_path, error, title }
 # ─── Supported formats ──────────────────────────────────────────────────────
 QUALITY_MAP = {
     "best":   "bestvideo+bestaudio/best",
-    "2160p":  "bestvideo[height<=2160]+bestaudio/best[height<=2160]",
-    "1440p":  "bestvideo[height<=1440]+bestaudio/best[height<=1440]",
-    "1080p":  "bestvideo[height<=1080]+bestaudio/best[height<=1080]",
-    "720p":   "bestvideo[height<=720]+bestaudio/best[height<=720]",
-    "480p":   "bestvideo[height<=480]+bestaudio/best[height<=480]",
-    "360p":   "bestvideo[height<=360]+bestaudio/best[height<=360]",
+    "2160p":  "bestvideo[height<=2160]+bestaudio/best[height<=2160]/bestvideo+bestaudio/best",
+    "1440p":  "bestvideo[height<=1440]+bestaudio/best[height<=1440]/bestvideo+bestaudio/best",
+    "1080p":  "bestvideo[height<=1080]+bestaudio/best[height<=1080]/bestvideo+bestaudio/best",
+    "720p":   "bestvideo[height<=720]+bestaudio/best[height<=720]/bestvideo+bestaudio/best",
+    "480p":   "bestvideo[height<=480]+bestaudio/best[height<=480]/bestvideo+bestaudio/best",
+    "360p":   "bestvideo[height<=360]+bestaudio/best[height<=360]/bestvideo+bestaudio/best",
 }
 
 AUDIO_FORMATS = {"mp3", "m4a", "flac", "wav", "ogg", "opus"}
@@ -152,9 +161,14 @@ def api_info():
     try:
         ydl_opts = _base_opts()
         ydl_opts["skip_download"] = True
+        ydl_opts["ignore_no_formats_error"] = True
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
+            
+        if not info.get("formats"):
+            return jsonify({"error": "YouTube blocked this video (Bot Detection or Age Restriction). Your cookies may be invalid/expired, or you need fresh ones. No video streams were found."}), 400
+
 
         duration = int(info.get("duration", 0) or 0)
         hrs, rem = divmod(duration, 3600)
@@ -171,6 +185,11 @@ def api_info():
             "views":     f"{views:,}",
             "url":       url,
         })
+    except yt_dlp.utils.DownloadError as e:
+        error_msg = str(e)
+        if "Requested format is not available" in error_msg or "Sign in to confirm you’re not a bot" in error_msg:
+            return jsonify({"error": "YouTube Bot Detection blocked the video stream. Please upload active YouTube cookies via the 'Sign In' button to bypass this!"}), 400
+        return jsonify({"error": error_msg}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 

@@ -4,6 +4,15 @@
 
 const API = "";   // same origin
 
+async function parseResponse(resp) {
+    const text = await resp.text();
+    try {
+        return JSON.parse(text);
+    } catch (e) {
+        throw new Error(`Server returned invalid response: ${text.substring(0, 100)}...`);
+    }
+}
+
 // ─── State ───────────────────────────────────────────────────────────────
 let currentInfo = null;
 let currentType = "video";  // "video" | "audio"
@@ -45,7 +54,7 @@ async function fetchInfo() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ url }),
         });
-        const data = await resp.json();
+        const data = await parseResponse(resp);
         if (!resp.ok) throw new Error(data.error || "Failed to fetch info");
 
         currentInfo = data;
@@ -129,7 +138,7 @@ async function startDownload() {
                 quality: quality,
             }),
         });
-        const data = await resp.json();
+        const data = await parseResponse(resp);
         if (!resp.ok) throw new Error(data.error || "Download failed");
 
         currentJobId = data.job_id;
@@ -150,7 +159,7 @@ function pollProgress() {
     pollTimer = setInterval(async () => {
         try {
             const resp = await fetch(`${API}/api/status/${currentJobId}`);
-            const data = await resp.json();
+            const data = await parseResponse(resp);
 
             if (data.status === "downloading" || data.status === "processing") {
                 document.getElementById("progressTitle").textContent =
@@ -260,7 +269,7 @@ async function checkAuthStatus() {
         const resp = await fetch(`${API}/api/auth-status`, { signal: controller.signal });
         clearTimeout(timeoutId);
 
-        const data = await resp.json();
+        const data = await parseResponse(resp);
         const icon = document.getElementById("authStatusIcon");
         const text = document.getElementById("authStatusText");
         const dot = document.getElementById("authDot");
@@ -310,7 +319,7 @@ async function uploadCookieFile(file) {
 
     try {
         const resp = await fetch(`${API}/api/upload-cookies`, { method: "POST", body: form });
-        const data = await resp.json();
+        const data = await parseResponse(resp);
         if (!resp.ok) throw new Error(data.error || "Upload failed");
 
         msgEl.className = "auth-msg auth-msg-success";
