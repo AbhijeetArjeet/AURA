@@ -18,6 +18,10 @@ DOWNLOAD_DIR   = os.path.join(os.path.dirname(__file__), "downloads")
 FFMPEG_PATH    = os.environ.get("FFMPEG_PATH", "")  # Set env var or leave empty (Render has ffmpeg built-in)
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
+# ─── PO Token (Proof of Origin) — bypasses YouTube bot detection ─────────────
+PO_TOKEN       = os.environ.get("PO_TOKEN", "")
+VISITOR_DATA   = os.environ.get("VISITOR_DATA", "")
+
 # In-memory job tracker
 jobs = {}  # job_id -> { status, progress, speed, eta, file_path, error, title }
 
@@ -33,6 +37,27 @@ QUALITY_MAP = {
 }
 
 AUDIO_FORMATS = {"mp3", "m4a", "flac", "wav", "ogg", "opus"}
+
+
+def _base_opts():
+    """Return common yt-dlp options including PO token if configured."""
+    opts = {
+        "quiet":        True,
+        "no_warnings":  True,
+        "noplaylist":   True,
+    }
+    if FFMPEG_PATH:
+        opts["ffmpeg_location"] = FFMPEG_PATH
+    # YouTube Proof-of-Origin token — lets cloud servers bypass bot detection
+    if PO_TOKEN and VISITOR_DATA:
+        opts["extractor_args"] = {
+            "youtube": {
+                "player_client": ["web"],
+                "po_token":      [f"web+{PO_TOKEN}"],
+            }
+        }
+        opts["extractor_args"]["youtube"]["visitor_data"] = [VISITOR_DATA]
+    return opts
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -61,14 +86,8 @@ def api_info():
         return jsonify({"error": "No URL provided"}), 400
 
     try:
-        ydl_opts = {
-            "quiet": True,
-            "no_warnings": True,
-            "skip_download": True,
-            "noplaylist": True,
-        }
-        if FFMPEG_PATH:
-            ydl_opts["ffmpeg_location"] = FFMPEG_PATH
+        ydl_opts = _base_opts()
+        ydl_opts["skip_download"] = True
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
@@ -155,16 +174,9 @@ def _run_download(job_id, url, container, quality):
 
     outtmpl = os.path.join(DOWNLOAD_DIR, f"{job_id}_%(title)s.%(ext)s")
 
-    opts = {
-        "outtmpl":         outtmpl,
-        "progress_hooks":  [lambda d: _progress_hook(job_id, d)],
-        "quiet":           True,
-        "no_warnings":     True,
-        "noplaylist":      True,
-    }
-
-    if FFMPEG_PATH:
-        opts["ffmpeg_location"] = FFMPEG_PATH
+    opts = _base_opts()
+    opts["outtmpl"]         = outtmpl
+    opts["progress_hooks"]  = [lambda d: _progress_hook(job_id, d)]
 
     if is_audio:
         opts["format"]         = "bestaudio/best"
