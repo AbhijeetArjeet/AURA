@@ -113,12 +113,20 @@ def api_upload_cookies():
 @app.route("/api/auth-status")
 def api_auth_status():
     """Return current authentication status."""
-    has_cookies = os.path.isfile(COOKIES_FILE)
-    has_po = bool(PO_TOKEN and VISITOR_DATA)
-    return jsonify({
-        "method": "cookies" if has_cookies else ("po_token" if has_po else "none"),
-        "authenticated": has_cookies or has_po,
-    })
+    try:
+        has_cookies = os.path.isfile(COOKIES_FILE)
+        has_po = bool(PO_TOKEN and VISITOR_DATA)
+        return jsonify({
+            "method": "cookies" if has_cookies else ("po_token" if has_po else "none"),
+            "authenticated": has_cookies or has_po,
+        })
+    except Exception as e:
+        print(f"Auth status check error: {e}")
+        return jsonify({
+            "method": "none",
+            "authenticated": False,
+            "error": str(e)
+        })
 
 
 @app.route("/api/clear-cookies", methods=["POST"])

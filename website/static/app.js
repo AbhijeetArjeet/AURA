@@ -254,7 +254,12 @@ function toggleAuthPanel() {
 
 async function checkAuthStatus() {
     try {
-        const resp = await fetch(`${API}/api/auth-status`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+
+        const resp = await fetch(`${API}/api/auth-status`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
         const data = await resp.json();
         const icon = document.getElementById("authStatusIcon");
         const text = document.getElementById("authStatusText");
@@ -275,7 +280,7 @@ async function checkAuthStatus() {
         }
     } catch {
         document.getElementById("authStatusIcon").textContent = "⚪";
-        document.getElementById("authStatusText").textContent = "Could not check status";
+        document.getElementById("authStatusText").textContent = "Could not check status (Server offline?)";
     }
 }
 
