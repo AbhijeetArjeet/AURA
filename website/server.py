@@ -29,11 +29,27 @@ FFMPEG_PATH    = os.environ.get("FFMPEG_PATH", "")  # Set env var or leave empty
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
 # ─── PO Token (Proof of Origin) — bypasses YouTube bot detection ─────────────
+# Loaded from env vars at startup; can be overridden at runtime via /api/set-po
+# NOTE: On Render free tier, runtime overrides are RAM-only and reset on restart.
+# Set PO_TOKEN and VISITOR_DATA as persistent Render environment variables instead.
 GLOBAL_PO_TOKEN     = os.environ.get("PO_TOKEN", "")
 GLOBAL_VISITOR_DATA = os.environ.get("VISITOR_DATA", "")
 
+# File to persist PO token across restarts (best-effort; ephemeral on free Render)
+PO_TOKEN_FILE = os.path.join(os.path.dirname(__file__), "po_token.json")
+
 # ─── Cookie file (backup auth) ───────────────────────────────────────────────
 COOKIES_FILE   = os.path.join(os.path.dirname(__file__), "cookies.txt")
+
+# Try loading saved PO token from file if not set via env vars
+if not GLOBAL_PO_TOKEN and os.path.isfile(PO_TOKEN_FILE):
+    try:
+        with open(PO_TOKEN_FILE) as f:
+            _saved = json.load(f)
+            GLOBAL_PO_TOKEN     = _saved.get("po_token", "")
+            GLOBAL_VISITOR_DATA = _saved.get("visitor_data", "")
+    except Exception:
+        pass
 
 # In-memory job tracker
 jobs = {}  # job_id -> { status, progress, speed, eta, file_path, error, title }
@@ -53,7 +69,7 @@ AUDIO_FORMATS = {"mp3", "m4a", "flac", "wav", "ogg", "opus"}
 
 
 def _base_opts():
-    """Return common yt-dlp options with auth (cookies > PO token > none)."""
+    """Return common yt-dlp options with auth (cookies + PO token combined, or fallback)."""
     opts = {
         "quiet":        True,
         "no_warnings":  True,
@@ -62,12 +78,12 @@ def _base_opts():
     if FFMPEG_PATH:
         opts["ffmpeg_location"] = FFMPEG_PATH
 
-    # Priority 1: Cookie file (most reliable)
+    # Always add cookies if available (most reliable method)
     if os.path.isfile(COOKIES_FILE):
         opts["cookiefile"] = COOKIES_FILE
 
-    # Priority 2: PO Token (Proof of Origin)
-    elif GLOBAL_PO_TOKEN:
+    # Add PO Token on top of cookies (YouTube now requires BOTH for some videos)
+    if GLOBAL_PO_TOKEN:
         opts["extractor_args"] = {
             "youtube": {
                 "player_client": ["web"],
@@ -76,9 +92,9 @@ def _base_opts():
         }
         if GLOBAL_VISITOR_DATA:
             opts["extractor_args"]["youtube"]["visitor_data"] = [GLOBAL_VISITOR_DATA]
-    
-    # Priority 3: iOS / TV bypass if no PO token available
-    else:
+
+    # Fallback: iOS/TV bypass if neither cookies nor PO token are available
+    elif not os.path.isfile(COOKIES_FILE):
         opts["extractor_args"] = {
             "youtube": {
                 "player_client": ["ios", "tv"]
@@ -140,12 +156,20 @@ def api_auth_status():
         if has_cookies and has_po: status_method = "both"
         elif has_cookies: status_method = "cookies"
         elif has_po: status_method = "po_token"
+
+        # Warn if neither method is active
+        ephemeral_warning = None
+        if not has_cookies and not has_po:
+            ephemeral_warning = "No auth active. Note: Render free tier resets uploaded cookies on restart. Use Render env vars (PO_TOKEN, VISITOR_DATA) for persistent auth."
         
         return jsonify({
             "method": status_method,
             "authenticated": has_cookies or has_po,
+            "has_cookies": has_cookies,
+            "has_po_token": has_po,
             "po_token": GLOBAL_PO_TOKEN,
-            "visitor_data": GLOBAL_VISITOR_DATA
+            "visitor_data": GLOBAL_VISITOR_DATA,
+            "warning": ephemeral_warning,
         })
     except Exception as e:
         print(f"Auth status check error: {e}")
@@ -157,20 +181,30 @@ def api_auth_status():
 
 @app.route("/api/set-po", methods=["POST"])
 def api_set_po():
-    """Receive PO Token and Visitor Data from UI."""
+    """Receive PO Token and Visitor Data from UI and persist to file."""
     global GLOBAL_PO_TOKEN, GLOBAL_VISITOR_DATA
     data = request.get_json(force=True)
     GLOBAL_PO_TOKEN = data.get("po_token", "").strip()
     GLOBAL_VISITOR_DATA = data.get("visitor_data", "").strip()
-    return jsonify({"ok": True, "message": "Tokens saved."})
+
+    # Save to file so it survives a gunicorn worker restart (not a full redeploy)
+    try:
+        with open(PO_TOKEN_FILE, "w") as f:
+            json.dump({"po_token": GLOBAL_PO_TOKEN, "visitor_data": GLOBAL_VISITOR_DATA}, f)
+    except Exception as e:
+        return jsonify({"ok": True, "message": f"Tokens saved in memory (file save failed: {e}). Use Render env vars for permanent storage."})
+
+    return jsonify({"ok": True, "message": "Tokens saved. For permanent storage across redeploys, set PO_TOKEN and VISITOR_DATA in Render environment variables."})
 
 
 @app.route("/api/clear-cookies", methods=["POST"])
 def api_clear_cookies():
-    """Remove uploaded cookies."""
+    """Remove uploaded cookies and saved tokens."""
     global GLOBAL_PO_TOKEN, GLOBAL_VISITOR_DATA
     if os.path.isfile(COOKIES_FILE):
         os.remove(COOKIES_FILE)
+    if os.path.isfile(PO_TOKEN_FILE):
+        os.remove(PO_TOKEN_FILE)
     GLOBAL_PO_TOKEN = ""
     GLOBAL_VISITOR_DATA = ""
     return jsonify({"ok": True, "message": "Cookies and Tokens removed."})

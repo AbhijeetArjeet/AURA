@@ -291,7 +291,7 @@ async function checkAuthStatus() {
             if (data.po_token) document.getElementById("poTokenInput").value = data.po_token;
         } else {
             icon.textContent = "🔴";
-            text.textContent = "Not authenticated — YouTube may block downloads";
+            text.textContent = data.warning || "Not authenticated — YouTube may block downloads";
             dot.className = "auth-dot auth-dot-red";
             label.textContent = "Sign In";
         }
@@ -388,4 +388,3 @@ async function savePoToken() {
 
 // Check auth on page load
 checkAuthStatus();
-
