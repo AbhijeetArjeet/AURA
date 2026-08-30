@@ -82,24 +82,16 @@ def _base_opts():
     if os.path.isfile(COOKIES_FILE):
         opts["cookiefile"] = COOKIES_FILE
 
-    # Add PO Token on top of cookies (YouTube now requires BOTH for some videos)
+    # Add PO Token if available (for environments/videos requiring Proof of Origin)
     if GLOBAL_PO_TOKEN:
+        po_val = GLOBAL_PO_TOKEN if "+" in GLOBAL_PO_TOKEN else f"web+{GLOBAL_PO_TOKEN}"
         opts["extractor_args"] = {
             "youtube": {
-                "player_client": ["web"],
-                "po_token":      [f"web+{GLOBAL_PO_TOKEN}"],
+                "po_token": [po_val],
             }
         }
         if GLOBAL_VISITOR_DATA:
             opts["extractor_args"]["youtube"]["visitor_data"] = [GLOBAL_VISITOR_DATA]
-
-    # Fallback: iOS/TV bypass if neither cookies nor PO token are available
-    elif not os.path.isfile(COOKIES_FILE):
-        opts["extractor_args"] = {
-            "youtube": {
-                "player_client": ["ios", "tv"]
-            }
-        }
 
     return opts
 

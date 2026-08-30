@@ -138,9 +138,9 @@ class DownloadWorker(QThread):
             "noplaylist":      True,
         }
 
-        # Use explicit path → fallback to hardcoded path → let yt-dlp find in PATH
-        ffmpeg = self.ffmpeg_location or FFMPEG_FALLBACK
-        if ffmpeg:
+        # Use explicit path → fallback to hardcoded path (if exists) → let yt-dlp find in PATH
+        ffmpeg = self.ffmpeg_location or (FFMPEG_FALLBACK if os.path.exists(FFMPEG_FALLBACK) else "")
+        if ffmpeg and os.path.exists(ffmpeg):
             opts["ffmpeg_location"] = ffmpeg
 
         if is_audio:

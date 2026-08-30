@@ -125,7 +125,6 @@ def try_no_auth():
             [sys.executable, "-m", "yt_dlp",
              "--verbose", "--skip-download", "--dump-json",
              "--no-playlist",
-             "--extractor-args", "youtube:player_client=ios",
              "https://www.youtube.com/watch?v=jNQXAC9IVRw"],
             capture_output=True, text=True, timeout=60
         )

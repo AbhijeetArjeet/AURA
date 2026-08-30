@@ -15,7 +15,7 @@ SETTINGS_APP  = "YouTubeDownloader"
 
 DEFAULTS = {
     "output_dir":      os.path.expanduser("~/Downloads"),
-    "ffmpeg_path":     r"C:\Users\hp\Downloads\ypdlp\ffmpeg\bin",
+    "ffmpeg_path":     r"C:\Users\hp\Downloads\ypdlp\ffmpeg\bin" if os.path.exists(r"C:\Users\hp\Downloads\ypdlp\ffmpeg\bin") else "",
     "default_quality": "1080p",
     "default_format":  "MP4",
     "max_concurrent":  2,
