@@ -1,11 +1,10 @@
-# 🎧 AURA & YPDlp — Premium Music Universe & High-Performance Downloader
+# 🎧 AURA — Premium Music Universe & High-Performance Media Suite
 
-[![GitHub Release](https://img.shields.io/badge/📦_Latest_Release-v1.1.0-success?style=for-the-badge&logo=github)](https://github.com/AbhijeetArjeet/yt_downloader/releases/tag/v1.1.0)
-[![Android](https://img.shields.io/badge/Android-APK_v1.1.0-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.1.0/AURA_YPDlp_Android_v1.1.0.apk)
-[![Windows](https://img.shields.io/badge/Windows-Desktop_x64-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.1.0/YPDlp_Windows_x64.zip)
+[![GitHub Release](https://img.shields.io/badge/📦_Latest_Release-v1.1.0-success?style=for-the-badge&logo=github)](https://github.com/AbhijeetArjeet/AURA/releases/tag/v1.1.0)
+[![Android](https://img.shields.io/badge/Android-APK_v1.1.0-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/AbhijeetArjeet/AURA/releases/download/v1.1.0/AURA_Android_v1.1.0.apk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-**AURA** is a Spotify/Apple Music/Winamp-inspired personal music universe combined with **YPDlp**'s 100% on-device standalone downloader. It turns your local music and video collection into an intelligent, evolving soundscape with real-time AutoMix DJ transitions, canvas visualizers, dynamic album art gradients, and an Otaku Mode.
+**AURA** is a Spotify/Apple Music/Winamp-inspired personal music universe. It turns your local music and video collection into an intelligent, evolving soundscape with real-time AutoMix DJ transitions, canvas visualizers, dynamic album art gradients, and an Otaku Mode.
 
 ---
 
@@ -13,9 +12,8 @@
 
 | Platform | Format | Package Link |
 |:---|:---|:---|
-| 📱 **Android** | APK (Universal) | [📥 **Download AURA_YPDlp_Android_v1.1.0.apk**](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.1.0/AURA_YPDlp_Android_v1.1.0.apk) |
-| 🖥️ **Windows (x64)** | Portable ZIP | [📥 **Download YPDlp_Windows_x64.zip**](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.1.0/YPDlp_Windows_x64.zip) |
-| 📦 **All Releases** | Changelogs & Assets | [📂 **GitHub Releases Page**](https://github.com/AbhijeetArjeet/yt_downloader/releases) |
+| 📱 **Android** | APK (Universal) | [📥 **Download AURA_Android_v1.1.0.apk**](https://github.com/AbhijeetArjeet/AURA/releases/download/v1.1.0/AURA_Android_v1.1.0.apk) |
+| 📦 **All Releases** | Changelogs & Assets | [📂 **GitHub Releases Page**](https://github.com/AbhijeetArjeet/AURA/releases) |
 
 ---
 
