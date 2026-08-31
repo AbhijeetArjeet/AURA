@@ -69,11 +69,16 @@ AUDIO_FORMATS = {"mp3", "m4a", "flac", "wav", "ogg", "opus"}
 
 
 def _base_opts():
-    """Return common yt-dlp options with auth (cookies + PO token combined, or fallback)."""
+    """Return common yt-dlp options with player fallbacks and auth."""
     opts = {
-        "quiet":        True,
-        "no_warnings":  True,
-        "noplaylist":   True,
+        "quiet":       True,
+        "no_warnings": True,
+        "noplaylist":  True,
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["web", "mweb", "android", "ios"],
+            }
+        }
     }
     if FFMPEG_PATH:
         opts["ffmpeg_location"] = FFMPEG_PATH
@@ -85,11 +90,7 @@ def _base_opts():
     # Add PO Token if available (for environments/videos requiring Proof of Origin)
     if GLOBAL_PO_TOKEN:
         po_val = GLOBAL_PO_TOKEN if "+" in GLOBAL_PO_TOKEN else f"web+{GLOBAL_PO_TOKEN}"
-        opts["extractor_args"] = {
-            "youtube": {
-                "po_token": [po_val],
-            }
-        }
+        opts["extractor_args"]["youtube"]["po_token"] = [po_val]
         if GLOBAL_VISITOR_DATA:
             opts["extractor_args"]["youtube"]["visitor_data"] = [GLOBAL_VISITOR_DATA]
 
@@ -214,6 +215,15 @@ def api_info():
     if not url:
         return jsonify({"error": "No URL provided"}), 400
 
+    # Normalize Shorts URLs
+    if "/shorts/" in url:
+        try:
+            vid_id = url.split("/shorts/")[1].split("?")[0].split("&")[0].split("/")[0]
+            if vid_id:
+                url = f"https://www.youtube.com/watch?v={vid_id}"
+        except Exception:
+            pass
+
     try:
         ydl_opts = _base_opts()
         ydl_opts["skip_download"] = True
@@ -222,9 +232,8 @@ def api_info():
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             
-        if not info.get("formats"):
-            return jsonify({"error": "YouTube blocked this video (Bot Detection or Age Restriction). Your cookies may be invalid/expired, or you need fresh ones. No video streams were found."}), 400
-
+        if not info:
+            return jsonify({"error": "Could not retrieve video information. Please verify the URL."}), 400
 
         duration = int(info.get("duration", 0) or 0)
         hrs, rem = divmod(duration, 3600)
@@ -233,10 +242,14 @@ def api_info():
 
         views = info.get("view_count", 0) or 0
 
+        # Thumbnail fallback
+        thumbs = info.get("thumbnails") or []
+        thumb_url = info.get("thumbnail") or (thumbs[-1].get("url") if thumbs else "")
+
         return jsonify({
             "title":     info.get("title", "Unknown"),
             "channel":   info.get("uploader", info.get("channel", "")),
-            "thumbnail": info.get("thumbnail", ""),
+            "thumbnail": thumb_url,
             "duration":  dur_str,
             "views":     f"{views:,}",
             "url":       url,

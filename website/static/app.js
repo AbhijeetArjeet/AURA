@@ -264,7 +264,7 @@ function toggleAuthPanel() {
 async function checkAuthStatus() {
     try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 12000); // 12 second timeout for cold starts
 
         const resp = await fetch(`${API}/api/auth-status`, { signal: controller.signal });
         clearTimeout(timeoutId);
