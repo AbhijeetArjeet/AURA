@@ -227,7 +227,7 @@ fun YPDlpApp(
                             ui = ui,
                             vm = vm,
                             onOpenAutoMix = { selectedTab = 1 },
-                            onOpenNowPlaying = {}
+                            onOpenNowPlaying = { showNowPlayingScreen = true }
                         )
                         1 -> com.ypdlp.downloader.aura.AuraAutoMixScreen(
                             session = ui.autoMixSession,
@@ -251,11 +251,19 @@ fun YPDlpApp(
 
         // Fullscreen AURA Music Universe Player
         if (showNowPlayingScreen && playerState.currentFile != null) {
-            com.ypdlp.downloader.aura.AuraNowPlayingScreen(
-                playerState = playerState,
-                vm = vm,
-                onClose = { showNowPlayingScreen = false }
-            )
+            androidx.compose.ui.window.Dialog(
+                onDismissRequest = { showNowPlayingScreen = false },
+                properties = androidx.compose.ui.window.DialogProperties(
+                    usePlatformDefaultWidth = false,
+                    decorFitsSystemWindows = false
+                )
+            ) {
+                com.ypdlp.downloader.aura.AuraNowPlayingScreen(
+                    playerState = playerState,
+                    vm = vm,
+                    onClose = { showNowPlayingScreen = false }
+                )
+            }
         }
 
         // In-App Video Player Dialog

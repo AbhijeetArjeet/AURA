@@ -7,6 +7,7 @@ import com.ypdlp.downloader.AuraAlbum
 import com.ypdlp.downloader.AuraArtist
 import com.ypdlp.downloader.DownloadedFile
 import com.ypdlp.downloader.ListeningStatistics
+import androidx.documentfile.provider.DocumentFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -30,22 +31,108 @@ object LibraryScanner {
             scanFolder(publicMusic, results)
         }
 
-        // 3. Public Downloads/YPDlp directory if accessible
-        val publicDownloads = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "YPDlp")
+        // 3. Public Downloads directory & Downloads/YPDlp
+        val publicDownloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
         if (publicDownloads.exists() && publicDownloads.canRead()) {
             scanFolder(publicDownloads, results)
         }
 
-        // 4. Custom User-Selected Folders
-        customFolderPaths.forEach { customPath ->
-            val customFolder = File(customPath)
-            if (customFolder.exists() && customFolder.canRead()) {
-                scanFolder(customFolder, results)
+        // 4. Custom User-Selected Folders (URI strings and absolute paths)
+        for (customPath in customFolderPaths) {
+            try {
+                if (customPath.startsWith("content://")) {
+                    val treeUri = android.net.Uri.parse(customPath)
+                    val documentFile = DocumentFile.fromTreeUri(context, treeUri)
+                    if (documentFile != null) {
+                        scanDocumentFolder(context, documentFile, results)
+                    }
+                } else {
+                    val customFolder = File(customPath)
+                    if (customFolder.exists() && customFolder.canRead()) {
+                        scanFolder(customFolder, results)
+                    }
+                }
+            } catch (e: Exception) {
+                // Ignore inaccessible individual folders
             }
         }
 
         // Deduplicate by canonical path & sort newest first
         results.distinctBy { it.path }.sortedByDescending { it.lastModified }
+    }
+
+    private fun scanDocumentFolder(context: Context, dir: DocumentFile, results: MutableList<DownloadedFile>) {
+        if (!dir.exists() || !dir.isDirectory) return
+
+        dir.listFiles().forEach { doc ->
+            if (doc.isFile) {
+                val name = doc.name ?: ""
+                val ext = name.substringAfterLast('.', "").lowercase()
+                if (ext in AUDIO_EXTENSIONS || ext in VIDEO_EXTENSIONS) {
+                    val isVideo = ext in VIDEO_EXTENSIONS
+                    val item = parseDocumentMetadata(context, doc, isVideo)
+                    if (item != null) {
+                        results.add(item)
+                    }
+                }
+            } else if (doc.isDirectory && !(doc.name ?: "").startsWith(".")) {
+                scanDocumentFolder(context, doc, results)
+            }
+        }
+    }
+
+    private fun parseDocumentMetadata(context: Context, doc: DocumentFile, isVideo: Boolean): DownloadedFile? {
+        val name = doc.name ?: return null
+        val cleanTitle = name.substringBeforeLast('.').replace("_", " ").trim()
+        var artist = "Unknown Artist"
+        var album = if (isVideo) "Music Video" else "Local Audio"
+        var durationSecs = 0L
+        var embeddedArt: ByteArray? = null
+
+        try {
+            val retriever = MediaMetadataRetriever()
+            retriever.setDataSource(context, doc.uri)
+
+            val metaArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)
+                ?: retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_AUTHOR)
+            val metaAlbum = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM)
+            val metaDur = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+
+            if (!metaArtist.isNullOrBlank()) artist = metaArtist
+            if (!metaAlbum.isNullOrBlank()) album = metaAlbum
+            if (!metaDur.isNullOrBlank()) durationSecs = (metaDur.toLongOrNull() ?: 0L) / 1000L
+            embeddedArt = retriever.embeddedPicture
+
+            retriever.release()
+        } catch (e: Exception) {
+            if (cleanTitle.contains(" - ")) {
+                val parts = cleanTitle.split(" - ")
+                if (parts.size >= 2) artist = parts[0].trim()
+            }
+        }
+
+        val (dom, sec) = generatePaletteColors(cleanTitle, artist)
+        val mb = doc.length() / (1024.0 * 1024.0)
+
+        return DownloadedFile(
+            file = File(doc.uri.toString()),
+            name = name,
+            title = cleanTitle,
+            sizeBytes = doc.length(),
+            sizeFormatted = "%.1f MB".format(mb),
+            isVideo = isVideo,
+            path = doc.uri.toString(),
+            lastModified = doc.lastModified(),
+            extension = name.substringAfterLast('.', "").uppercase(),
+            artist = artist,
+            album = album,
+            durationSeconds = durationSecs,
+            bpm = 120,
+            energyLevel = 0.6f,
+            dominantColorHex = dom,
+            secondaryColorHex = sec,
+            artworkByteArray = embeddedArt
+        )
     }
 
     private fun scanFolder(folder: File, results: MutableList<DownloadedFile>) {
@@ -67,10 +154,18 @@ object LibraryScanner {
 
     private fun parseMetadata(file: File, isVideo: Boolean): DownloadedFile {
         var artist = "Unknown Artist"
-        var album = if (isVideo) "Music Video" else "Local Track"
+        val parentDirName = file.parentFile?.name ?: ""
+        var album = if (parentDirName.isNotBlank() && parentDirName != "YPDlp" && parentDirName != "Download" && parentDirName != "Music") {
+            parentDirName
+        } else if (isVideo) {
+            "Music Video"
+        } else {
+            "Local Track"
+        }
         var durationSecs = 0L
         val cleanTitle = file.nameWithoutExtension.replace("_", " ").trim()
 
+        var embeddedArt: ByteArray? = null
         try {
             val retriever = MediaMetadataRetriever()
             retriever.setDataSource(file.absolutePath)
@@ -83,6 +178,8 @@ object LibraryScanner {
             if (!metaArtist.isNullOrBlank()) artist = metaArtist
             if (!metaAlbum.isNullOrBlank()) album = metaAlbum
             if (!metaDur.isNullOrBlank()) durationSecs = (metaDur.toLongOrNull() ?: 0L) / 1000L
+
+            embeddedArt = retriever.embeddedPicture
 
             retriever.release()
         } catch (e: Exception) {
@@ -144,7 +241,8 @@ object LibraryScanner {
             bpm = bpm,
             energyLevel = energy,
             dominantColorHex = dom,
-            secondaryColorHex = sec
+            secondaryColorHex = sec,
+            artworkByteArray = embeddedArt
         )
     }
 

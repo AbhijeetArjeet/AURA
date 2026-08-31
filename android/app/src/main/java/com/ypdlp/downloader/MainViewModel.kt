@@ -262,7 +262,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun addPlaylistToQueue() {
         val playlist = _ui.value.playlistInfo ?: return
-        val outDir = DownloadService.getDownloadDirectory(getApplication()).absolutePath
+        val baseDir = DownloadService.getDownloadDirectory(getApplication())
+        val cleanPlaylistName = playlist.title.replace(Regex("[\\\\/:*?\"<>|]"), "_").trim()
+        val playlistDir = File(baseDir, cleanPlaylistName)
+        if (!playlistDir.exists()) playlistDir.mkdirs()
 
         playlist.items.forEach { item ->
             val req = DownloadRequest(
@@ -270,7 +273,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 url = item.url,
                 container = _ui.value.selectedContainer,
                 quality = _ui.value.selectedQuality,
-                outputDir = outDir,
+                outputDir = playlistDir.absolutePath,
                 serverUrl = _ui.value.serverUrl
             )
             downloadService?.enqueue(req, videoTitle = item.title, thumbnailUrl = item.thumbnailUrl)

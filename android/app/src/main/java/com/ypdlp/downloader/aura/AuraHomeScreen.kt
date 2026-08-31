@@ -14,9 +14,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import android.graphics.Bitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -71,6 +73,41 @@ fun AuraHomeScreen(
                     color = Color.White
                 )
             }
+        }
+
+        // ── Search & Filter Songs/Folders ─────────────────────────────────
+        item {
+            var query by remember { mutableStateOf("") }
+            OutlinedTextField(
+                value = query,
+                onValueChange = {
+                    query = it
+                    vm.setSearchQuery(it)
+                },
+                placeholder = { Text("Search songs, artists, albums, or folders...", fontSize = 13.sp, color = Color.White.copy(alpha = 0.45f)) },
+                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search", tint = Color(0xFF00E5FF)) },
+                trailingIcon = {
+                    if (query.isNotBlank()) {
+                        IconButton(onClick = {
+                            query = ""
+                            vm.setSearchQuery("")
+                        }) {
+                            Icon(Icons.Filled.Close, contentDescription = "Clear", tint = Color.White.copy(alpha = 0.6f))
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFF00E5FF),
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                    focusedContainerColor = Color(0xFF141726).copy(alpha = 0.7f),
+                    unfocusedContainerColor = Color(0xFF141726).copy(alpha = 0.7f),
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                ),
+                singleLine = true
+            )
         }
 
         // ── ✨ Magic Playlist Natural Prompt Input ───────────────────────────
@@ -237,11 +274,13 @@ fun AuraHomeScreen(
                         contract = androidx.activity.result.contract.ActivityResultContracts.OpenDocumentTree()
                     ) { uri ->
                         uri?.let {
-                            // Extract directory path from tree URI if possible
-                            val path = it.path ?: ""
-                            if (path.isNotBlank()) {
-                                vm.addCustomMusicFolder(path)
+                            try {
+                                val flags = android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                context.contentResolver.takePersistableUriPermission(it, flags)
+                            } catch (e: Exception) {
+                                // Ignore if not persistable
                             }
+                            vm.addCustomMusicFolder(it.toString())
                         }
                     }
 
@@ -275,11 +314,25 @@ fun AuraHomeScreen(
                         }
                     }
                 } else {
-                    ui.downloadedFiles.take(8).forEach { track ->
+                    val displayedTracks = if (ui.searchQuery.isBlank()) {
+                        ui.downloadedFiles
+                    } else {
+                        ui.downloadedFiles.filter {
+                            it.title.contains(ui.searchQuery, ignoreCase = true) ||
+                            it.artist.contains(ui.searchQuery, ignoreCase = true) ||
+                            it.album.contains(ui.searchQuery, ignoreCase = true) ||
+                            it.path.contains(ui.searchQuery, ignoreCase = true)
+                        }
+                    }
+
+                    displayedTracks.forEach { track ->
                         AuraTrackRow(
                             track = track,
                             isFavorite = track.path in ui.favorites,
-                            onClick = { vm.playMediaFile(track) },
+                            onClick = {
+                                vm.playMediaFile(track)
+                                onOpenNowPlaying()
+                            },
                             onToggleFav = { vm.toggleFavorite(track) }
                         )
                     }
@@ -318,12 +371,21 @@ fun AuraTrackRow(
                     .background(Color(0xFF1E2235)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    if (track.isVideo) Icons.Filled.Movie else Icons.Filled.MusicNote,
-                    contentDescription = null,
-                    tint = Color(0xFF00E5FF),
-                    modifier = Modifier.size(22.dp)
-                )
+                if (track.artworkByteArray != null) {
+                    coil.compose.AsyncImage(
+                        model = track.artworkByteArray,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Icon(
+                        if (track.isVideo) Icons.Filled.Movie else Icons.Filled.MusicNote,
+                        contentDescription = null,
+                        tint = Color(0xFF00E5FF),
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
             }
 
             Spacer(Modifier.width(12.dp))

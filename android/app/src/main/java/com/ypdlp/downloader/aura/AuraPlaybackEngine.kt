@@ -69,7 +69,12 @@ class AuraPlaybackEngine(private val context: Context) {
                         .setUsage(AudioAttributes.USAGE_MEDIA)
                         .build()
                 )
-                setDataSource(context, Uri.fromFile(file.file))
+                val mediaUri = if (file.path.startsWith("content://")) {
+                    Uri.parse(file.path)
+                } else {
+                    Uri.fromFile(file.file)
+                }
+                setDataSource(context, mediaUri)
                 prepare()
                 if (startPositionMs > 0 && startPositionMs < duration) {
                     seekTo(startPositionMs.toInt())

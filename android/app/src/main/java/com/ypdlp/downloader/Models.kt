@@ -84,7 +84,8 @@ data class DownloadedFile(
     val isFavorite: Boolean = false,
     val playCount: Int = 0,
     val dominantColorHex: String = "#FF2A55",
-    val secondaryColorHex: String = "#9D4EDD"
+    val secondaryColorHex: String = "#9D4EDD",
+    val artworkByteArray: ByteArray? = null
 )
 
 // ─── AURA Extended Entities ──────────────────────────────────────────────────

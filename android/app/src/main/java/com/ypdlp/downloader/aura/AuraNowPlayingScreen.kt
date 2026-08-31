@@ -15,6 +15,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -129,18 +132,26 @@ fun AuraNowPlayingScreen(
                 modifier = Modifier
                     .fillMaxWidth(0.85f)
                     .aspectRatio(1f)
-                    .shadow(32.dp, RoundedCornerShape(28.dp), ambientColor = primaryColor, spotColor = secondaryColor)
                     .clip(RoundedCornerShape(28.dp))
                     .background(Color(0xFF141724))
                     .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(28.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    Icons.Filled.MusicNote,
-                    contentDescription = null,
-                    tint = primaryColor.copy(alpha = 0.4f),
-                    modifier = Modifier.size(96.dp)
-                )
+                if (currentFile.artworkByteArray != null) {
+                    AsyncImage(
+                        model = currentFile.artworkByteArray,
+                        contentDescription = "Album Art",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Icon(
+                        Icons.Filled.MusicNote,
+                        contentDescription = null,
+                        tint = primaryColor.copy(alpha = 0.7f),
+                        modifier = Modifier.size(96.dp)
+                    )
+                }
 
                 // Otaku floating quotes
                 if (playerState.isOtakuMode) {

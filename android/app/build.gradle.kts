@@ -82,6 +82,7 @@ dependencies {
     // 100% On-Device Standalone Engine (Embedded Python 3.11 + yt-dlp + embedded FFmpeg)
     implementation("io.github.junkfood02.youtubedl-android:library:0.18.1")
     implementation("io.github.junkfood02.youtubedl-android:ffmpeg:0.18.1")
+    implementation("androidx.documentfile:documentfile:1.0.1")
 
     debugImplementation(libs.androidx.ui.tooling)
 }
