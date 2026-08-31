@@ -231,7 +231,31 @@ fun AuraHomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text("Your Local Tracks", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White)
-                    Text("${ui.downloadedFiles.size} tracks", fontSize = 12.sp, color = Color.White.copy(alpha = 0.6f))
+                    
+                    val context = androidx.compose.ui.platform.LocalContext.current
+                    val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
+                        contract = androidx.activity.result.contract.ActivityResultContracts.OpenDocumentTree()
+                    ) { uri ->
+                        uri?.let {
+                            // Extract directory path from tree URI if possible
+                            val path = it.path ?: ""
+                            if (path.isNotBlank()) {
+                                vm.addCustomMusicFolder(path)
+                            }
+                        }
+                    }
+
+                    OutlinedButton(
+                        onClick = { launcher.launch(null) },
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, Color(0xFF00E5FF).copy(alpha = 0.5f)),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
+                        modifier = Modifier.height(30.dp)
+                    ) {
+                        Icon(Icons.Filled.CreateNewFolder, contentDescription = null, tint = Color(0xFF00E5FF), modifier = Modifier.size(14.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("+ Add Folder", fontSize = 11.sp, color = Color(0xFF00E5FF), fontWeight = FontWeight.Bold)
+                    }
                 }
 
                 if (ui.downloadedFiles.isEmpty()) {

@@ -43,7 +43,8 @@ data class UiState(
     val autoMixSession: AutoMixSession = AutoMixSession(),
     val visualizerMode: VisualizerMode = VisualizerMode.SPECTRUM,
     val isVideoPlayerFullscreen: Boolean = false,
-    val activeVideoFile: DownloadedFile? = null
+    val activeVideoFile: DownloadedFile? = null,
+    val customMusicFolders: Set<String> = emptySet()
 )
 
 enum class DownloadType { VIDEO, AUDIO }
@@ -58,7 +59,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             serverUrl = prefs.getString("server_url", "") ?: "",
             isHachimanMode = prefs.getBoolean("hachiman_mode", false),
             isOtakuMode = prefs.getBoolean("otaku_mode", false),
-            favorites = prefs.getStringSet("aura_favorites", emptySet()) ?: emptySet()
+            favorites = prefs.getStringSet("aura_favorites", emptySet()) ?: emptySet(),
+            customMusicFolders = prefs.getStringSet("aura_custom_folders", emptySet()) ?: emptySet()
         )
     )
     val ui = _ui.asStateFlow()
@@ -283,7 +285,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun loadDownloadedFiles() {
         viewModelScope.launch(Dispatchers.IO) {
             _ui.update { it.copy(isScanningFiles = true) }
-            val files = com.ypdlp.downloader.aura.LibraryScanner.scanLocalMedia(getApplication())
+            val files = com.ypdlp.downloader.aura.LibraryScanner.scanLocalMedia(getApplication(), _ui.value.customMusicFolders)
             val albums = com.ypdlp.downloader.aura.LibraryScanner.groupAlbums(files)
             val artists = com.ypdlp.downloader.aura.LibraryScanner.groupArtists(files)
             val stats = com.ypdlp.downloader.aura.LibraryScanner.computeStatistics(files, _ui.value.favorites)
@@ -304,6 +306,22 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 )
             }
         }
+    }
+
+    fun addCustomMusicFolder(folderPath: String) {
+        val updated = _ui.value.customMusicFolders.toMutableSet()
+        updated.add(folderPath)
+        prefs.edit().putStringSet("aura_custom_folders", updated).apply()
+        _ui.update { it.copy(customMusicFolders = updated) }
+        loadDownloadedFiles()
+    }
+
+    fun removeCustomMusicFolder(folderPath: String) {
+        val updated = _ui.value.customMusicFolders.toMutableSet()
+        updated.remove(folderPath)
+        prefs.edit().putStringSet("aura_custom_folders", updated).apply()
+        _ui.update { it.copy(customMusicFolders = updated) }
+        loadDownloadedFiles()
     }
 
     fun toggleFavorite(file: DownloadedFile) {

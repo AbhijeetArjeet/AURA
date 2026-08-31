@@ -17,17 +17,31 @@ object LibraryScanner {
     private val AUDIO_EXTENSIONS = setOf("mp3", "m4a", "flac", "wav", "ogg", "opus", "aac")
     private val VIDEO_EXTENSIONS = setOf("mp4", "mkv", "webm", "avi")
 
-    suspend fun scanLocalMedia(context: Context): List<DownloadedFile> = withContext(Dispatchers.IO) {
+    suspend fun scanLocalMedia(context: Context, customFolderPaths: Set<String> = emptySet()): List<DownloadedFile> = withContext(Dispatchers.IO) {
         val results = mutableListOf<DownloadedFile>()
 
         // 1. App YPDlp Download directory
         val appDir = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "YPDlp")
         scanFolder(appDir, results)
 
-        // 2. Public Downloads/YPDlp directory if accessible
+        // 2. Standard Public Music Directory
+        val publicMusic = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
+        if (publicMusic.exists() && publicMusic.canRead()) {
+            scanFolder(publicMusic, results)
+        }
+
+        // 3. Public Downloads/YPDlp directory if accessible
         val publicDownloads = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "YPDlp")
         if (publicDownloads.exists() && publicDownloads.canRead()) {
             scanFolder(publicDownloads, results)
+        }
+
+        // 4. Custom User-Selected Folders
+        customFolderPaths.forEach { customPath ->
+            val customFolder = File(customPath)
+            if (customFolder.exists() && customFolder.canRead()) {
+                scanFolder(customFolder, results)
+            }
         }
 
         // Deduplicate by canonical path & sort newest first
