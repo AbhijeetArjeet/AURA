@@ -459,6 +459,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun playMediaFile(file: DownloadedFile) {
+        MediaPlaybackService.updateCurrentMediaFile(file)
         val context = getApplication<Application>()
         val intent = Intent(context, MediaPlaybackService::class.java).apply {
             action = MediaPlaybackService.ACTION_PLAY

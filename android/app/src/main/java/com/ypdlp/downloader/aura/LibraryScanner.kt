@@ -92,10 +92,22 @@ object LibraryScanner {
     }
 
     private fun parseDocumentMetadata(context: Context, doc: DocumentFile, isVideo: Boolean): DownloadedFile? {
-        val name = doc.name ?: return null
-        val cleanTitle = name.substringBeforeLast('.').replace("_", " ").trim()
+        val rawName = doc.name ?: return null
+        val decodedName = try {
+            java.net.URLDecoder.decode(rawName, "UTF-8")
+        } catch (e: Exception) {
+            rawName
+        }
+        var cleanTitle = decodedName.substringBeforeLast('.').replace("_", " ").trim()
         var artist = "Unknown Artist"
-        var album = if (isVideo) "Music Video" else "Local Audio"
+        val parentFolder = doc.parentFile?.name
+        var album = if (!parentFolder.isNullOrBlank()) {
+            try { java.net.URLDecoder.decode(parentFolder, "UTF-8") } catch (e: Exception) { parentFolder }
+        } else if (isVideo) {
+            "Music Video"
+        } else {
+            "Local Audio"
+        }
         var durationSecs = 0L
         var embeddedArt: ByteArray? = null
 
@@ -103,13 +115,15 @@ object LibraryScanner {
             val retriever = MediaMetadataRetriever()
             retriever.setDataSource(context, doc.uri)
 
+            val metaTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
             val metaArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)
                 ?: retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_AUTHOR)
             val metaAlbum = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM)
             val metaDur = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
 
-            if (!metaArtist.isNullOrBlank()) artist = metaArtist
-            if (!metaAlbum.isNullOrBlank()) album = metaAlbum
+            if (!metaTitle.isNullOrBlank()) cleanTitle = metaTitle.trim()
+            if (!metaArtist.isNullOrBlank()) artist = metaArtist.trim()
+            if (!metaAlbum.isNullOrBlank()) album = metaAlbum.trim()
             if (!metaDur.isNullOrBlank()) durationSecs = (metaDur.toLongOrNull() ?: 0L) / 1000L
             embeddedArt = retriever.embeddedPicture
 
@@ -126,14 +140,14 @@ object LibraryScanner {
 
         return DownloadedFile(
             file = File(doc.uri.toString()),
-            name = name,
+            name = decodedName,
             title = cleanTitle,
             sizeBytes = doc.length(),
             sizeFormatted = "%.1f MB".format(mb),
             isVideo = isVideo,
             path = doc.uri.toString(),
             lastModified = doc.lastModified(),
-            extension = name.substringAfterLast('.', "").uppercase(),
+            extension = decodedName.substringAfterLast('.', "").uppercase(),
             artist = artist,
             album = album,
             durationSeconds = durationSecs,

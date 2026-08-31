@@ -20,6 +20,7 @@ import android.graphics.BitmapFactory
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -63,26 +64,135 @@ fun AuraNowPlayingScreen(
         }
     }
 
+    var isAodMode by remember { mutableStateOf(false) }
+    var isVinylMode by remember { mutableStateOf(true) }
+
+    // Vinyl Disc Infinite Rotation Animation
+    val infiniteTransition = rememberInfiniteTransition(label = "VinylDisc")
+    val discRotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = if (playerState.isPlaying) 8000 else 100000000,
+                easing = LinearEasing
+            ),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "discRot"
+    )
+
+    if (isAodMode) {
+        // ── AMOLED / Always-On-Display (AOD) Blackout Mode ────────────────────
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                .clickable { isAodMode = false },
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.padding(32.dp)
+            ) {
+                // Minimal Rotating AOD Vinyl
+                Box(
+                    modifier = Modifier
+                        .size(180.dp)
+                        .graphicsLayer { rotationZ = discRotation }
+                        .clip(CircleShape)
+                        .background(Color(0xFF111111))
+                        .border(1.dp, Color.White.copy(alpha = 0.25f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (currentFile.artworkByteArray != null) {
+                        AsyncImage(
+                            model = currentFile.artworkByteArray,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(70.dp)
+                                .clip(CircleShape)
+                        )
+                    } else {
+                        Icon(
+                            Icons.Filled.MusicNote,
+                            contentDescription = null,
+                            tint = Color.White.copy(alpha = 0.6f),
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(16.dp)
+                            .clip(CircleShape)
+                            .background(Color.Black)
+                            .border(1.dp, Color.White.copy(alpha = 0.4f), CircleShape)
+                    )
+                }
+
+                Spacer(Modifier.height(36.dp))
+
+                Text(
+                    currentFile.title,
+                    color = Color.White.copy(alpha = 0.9f),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Light,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    currentFile.artist,
+                    color = Color.White.copy(alpha = 0.5f),
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(Modifier.height(28.dp))
+
+                val posSec = (sliderPos * playerState.durationMs / 1000).toLong()
+                val durSec = playerState.durationMs / 1000
+                Text(
+                    "%02d:%02d / %02d:%02d".format(posSec / 60, posSec % 60, durSec / 60, durSec % 60),
+                    color = Color.White.copy(alpha = 0.4f),
+                    fontSize = 12.sp,
+                    letterSpacing = 2.sp
+                )
+
+                Spacer(Modifier.height(40.dp))
+                Text("Tap anywhere to exit AOD", color = Color.White.copy(alpha = 0.25f), fontSize = 11.sp)
+            }
+        }
+        return
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color(0xFF090A12))
             .background(
                 Brush.verticalGradient(
                     listOf(
-                        primaryColor.copy(alpha = 0.45f),
-                        secondaryColor.copy(alpha = 0.20f),
-                        Color(0xFF080911)
+                        primaryColor.copy(alpha = 0.55f),
+                        secondaryColor.copy(alpha = 0.25f),
+                        Color(0xFF090A12)
                     )
                 )
             )
     ) {
-        // Atmospheric Visualizer in Background
+        // Atmospheric Visualizer in Background (subtle 25% opacity so it never blocks UI elements)
         AuraVisualizerView(
             mode = playerState.visualizerMode,
             bands = playerState.visualizerData,
-            primaryColor = primaryColor,
-            secondaryColor = secondaryColor,
-            modifier = Modifier.fillMaxSize()
+            primaryColor = primaryColor.copy(alpha = 0.35f),
+            secondaryColor = secondaryColor.copy(alpha = 0.35f),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(260.dp)
+                .align(Alignment.BottomCenter)
         )
 
         Column(
@@ -118,39 +228,123 @@ fun AuraNowPlayingScreen(
                         color = Color.White
                     )
                 }
-                IconButton(onClick = {
-                    val modes = VisualizerMode.values()
-                    val nextIdx = (modes.indexOf(playerState.visualizerMode) + 1) % modes.size
-                    vm.setVisualizerMode(modes[nextIdx])
-                }) {
-                    Icon(Icons.Filled.GraphicEq, contentDescription = "Visualizer Mode", tint = secondaryColor)
+
+                Row {
+                    // AOD / AMOLED Ambient Toggle
+                    IconButton(onClick = { isAodMode = true }) {
+                        Icon(Icons.Filled.DarkMode, contentDescription = "AMOLED AOD Mode", tint = Color(0xFF00E5FF))
+                    }
+                    // Visualizer Mode Switch
+                    IconButton(onClick = {
+                        val modes = VisualizerMode.values()
+                        val nextIdx = (modes.indexOf(playerState.visualizerMode) + 1) % modes.size
+                        vm.setVisualizerMode(modes[nextIdx])
+                    }) {
+                        Icon(Icons.Filled.GraphicEq, contentDescription = "Visualizer Mode", tint = secondaryColor)
+                    }
                 }
             }
 
-            // ── Artwork Hero Area with Glow ─────────────────────────────────
+            // ── Rotating Circular Vinyl Disc / Album Card Hero ───────────────
             Box(
                 modifier = Modifier
                     .fillMaxWidth(0.85f)
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(28.dp))
-                    .background(Color(0xFF141724))
-                    .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(28.dp)),
+                    .clickable { isVinylMode = !isVinylMode },
                 contentAlignment = Alignment.Center
             ) {
-                if (currentFile.artworkByteArray != null) {
-                    AsyncImage(
-                        model = currentFile.artworkByteArray,
-                        contentDescription = "Album Art",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
+                if (isVinylMode) {
+                    // 💽 Realistic Spinning Vinyl Record
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer { rotationZ = discRotation }
+                            .clip(CircleShape)
+                            .background(
+                                Brush.radialGradient(
+                                    listOf(
+                                        Color(0xFF1E202A),
+                                        Color(0xFF0A0B10),
+                                        Color(0xFF161822),
+                                        Color(0xFF07080C)
+                                    )
+                                )
+                            )
+                            .border(2.dp, Color.White.copy(alpha = 0.18f), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        // Concentric Grooves
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize(0.82f)
+                                .border(1.dp, Color.White.copy(alpha = 0.08f), CircleShape)
+                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize(0.64f)
+                                .border(1.dp, Color.White.copy(alpha = 0.08f), CircleShape)
+                        )
+
+                        // Center Album Artwork Label
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize(0.48f)
+                                .clip(CircleShape)
+                                .background(Color(0xFF141724))
+                                .border(2.dp, primaryColor, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (currentFile.artworkByteArray != null) {
+                                AsyncImage(
+                                    model = currentFile.artworkByteArray,
+                                    contentDescription = "Album Art",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            } else {
+                                Icon(
+                                    Icons.Filled.MusicNote,
+                                    contentDescription = null,
+                                    tint = primaryColor,
+                                    modifier = Modifier.size(44.dp)
+                                )
+                            }
+                            // Center Spindle Hole
+                            Box(
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF090A12))
+                                    .border(2.dp, Color.White.copy(alpha = 0.6f), CircleShape)
+                            )
+                        }
+                    }
                 } else {
-                    Icon(
-                        Icons.Filled.MusicNote,
-                        contentDescription = null,
-                        tint = primaryColor.copy(alpha = 0.7f),
-                        modifier = Modifier.size(96.dp)
-                    )
+                    // Standard Square Poster Hero Card
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(28.dp))
+                            .background(Color(0xFF141724))
+                            .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(28.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (currentFile.artworkByteArray != null) {
+                            AsyncImage(
+                                model = currentFile.artworkByteArray,
+                                contentDescription = "Album Art",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } else {
+                            Icon(
+                                Icons.Filled.MusicNote,
+                                contentDescription = null,
+                                tint = primaryColor.copy(alpha = 0.7f),
+                                modifier = Modifier.size(96.dp)
+                            )
+                        }
+                    }
                 }
 
                 // Otaku floating quotes

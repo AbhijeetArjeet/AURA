@@ -1680,19 +1680,58 @@ fun FloatingMiniPlayer(
                 trackColor = GlassBorder
             )
 
+            val miniTransition = rememberInfiniteTransition(label = "MiniDisc")
+            val miniDiscRotation by miniTransition.animateFloat(
+                initialValue = 0f,
+                targetValue = 360f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(durationMillis = if (isPlaying) 6000 else 100000000, easing = LinearEasing),
+                    repeatMode = RepeatMode.Restart
+                ),
+                label = "miniDiscRot"
+            )
+
             Row(
                 modifier = Modifier
                     .padding(horizontal = 14.dp, vertical = 10.dp)
                     .fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    if (file.isVideo) Icons.Filled.Movie else Icons.Filled.MusicNote,
-                    contentDescription = null,
-                    tint = LiquidCyan,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(Modifier.width(10.dp))
+                // 💽 Rotating Mini Vinyl Disc Widget
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .graphicsLayer { rotationZ = miniDiscRotation }
+                        .clip(CircleShape)
+                        .background(Color(0xFF141724))
+                        .border(1.5.dp, LiquidCyan.copy(alpha = 0.7f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (file.artworkByteArray != null) {
+                        AsyncImage(
+                            model = file.artworkByteArray,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        Icon(
+                            if (file.isVideo) Icons.Filled.Movie else Icons.Filled.MusicNote,
+                            contentDescription = null,
+                            tint = LiquidCyan,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    // Mini spindle hole
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF090A12))
+                            .border(1.dp, Color.White.copy(alpha = 0.5f), CircleShape)
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text(
                         file.title,

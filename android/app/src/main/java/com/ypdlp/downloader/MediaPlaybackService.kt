@@ -33,7 +33,6 @@ class MediaPlaybackService : Service() {
     companion object {
         const val CHANNEL_ID = "ypdlp_player_channel"
         const val NOTIFICATION_ID = 2002
-
         const val ACTION_PLAY = "com.ypdlp.ACTION_PLAY"
         const val ACTION_PAUSE = "com.ypdlp.ACTION_PAUSE"
         const val ACTION_TOGGLE = "com.ypdlp.ACTION_TOGGLE"
@@ -42,6 +41,10 @@ class MediaPlaybackService : Service() {
 
         private val _playerState = MutableStateFlow(PlayerState())
         val playerState = _playerState.asStateFlow()
+
+        fun updateCurrentMediaFile(file: DownloadedFile) {
+            _playerState.update { it.copy(currentFile = file, isPlaying = true) }
+        }
     }
 
     private val binder = LocalBinder()
@@ -111,20 +114,24 @@ class MediaPlaybackService : Service() {
         val file = File(filePath)
         if (!isUri && !file.exists()) return
 
-        val fileName = if (isUri) filePath.substringAfterLast('%').substringAfterLast('/') else file.name
-        val cleanTitle = if (isUri) filePath.substringAfterLast('/').replace("_", " ") else file.nameWithoutExtension.replace("_", " ")
-
-        val downloadedFile = DownloadedFile(
-            file = file,
-            name = fileName,
-            title = cleanTitle,
-            sizeBytes = if (isUri) 0L else file.length(),
-            sizeFormatted = "",
-            isVideo = filePath.lowercase().endsWith(".mp4") || filePath.lowercase().endsWith(".mkv"),
-            path = filePath,
-            lastModified = System.currentTimeMillis(),
-            extension = filePath.substringAfterLast('.', "AUDIO").uppercase()
-        )
+        val existing = _playerState.value.currentFile
+        val downloadedFile = if (existing != null && existing.path == filePath) {
+            existing
+        } else {
+            val fileName = if (isUri) filePath.substringAfterLast('%').substringAfterLast('/') else file.name
+            val cleanTitle = if (isUri) java.net.URLDecoder.decode(filePath.substringAfterLast('/'), "UTF-8").replace("_", " ") else file.nameWithoutExtension.replace("_", " ")
+            DownloadedFile(
+                file = file,
+                name = fileName,
+                title = cleanTitle,
+                sizeBytes = if (isUri) 0L else file.length(),
+                sizeFormatted = "",
+                isVideo = filePath.lowercase().endsWith(".mp4") || filePath.lowercase().endsWith(".mkv"),
+                path = filePath,
+                lastModified = System.currentTimeMillis(),
+                extension = filePath.substringAfterLast('.', "AUDIO").uppercase()
+            )
+        }
 
         _playerState.update {
             it.copy(
