@@ -11,12 +11,16 @@ import android.os.Binder
 import android.os.Build
 import android.os.Environment
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.yausername.youtubedl_android.YoutubeDL
+import com.yausername.youtubedl_android.YoutubeDLRequest
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import java.io.File
+import java.util.regex.Pattern
 
 class DownloadService : Service() {
 
@@ -25,6 +29,7 @@ class DownloadService : Service() {
         const val NOTIF_ID = 1001
         const val ACTION_DOWNLOAD = "com.ypdlp.ACTION_DOWNLOAD"
         const val EXTRA_REQUEST = "download_request"
+        private const val TAG = "DownloadService"
 
         fun getDownloadDirectory(context: Context): File {
             val publicDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
@@ -97,103 +102,89 @@ class DownloadService : Service() {
 
         val outDir = getDownloadDirectory(applicationContext)
 
+        // If embedded on-device engine is ready, download 100% on-device
+        if (YPDlpApp.isStandaloneEngineReady && req.serverUrl.isBlank()) {
+            runOnDeviceDownload(req, item, outDir)
+        } else if (req.serverUrl.isNotBlank()) {
+            runRemoteServerDownload(req, item, outDir)
+        } else {
+            // Fallback to on-device attempt
+            runOnDeviceDownload(req, item, outDir)
+        }
+    }
+
+    /**
+     * 100% On-Device Standalone Download (Embedded yt-dlp + embedded FFmpeg)
+     */
+    private suspend fun runOnDeviceDownload(req: DownloadRequest, item: DownloadItem, outDir: File) = withContext(Dispatchers.IO) {
         try {
-            // 1. Initiate download job on backend server
-            updateItem(item.id) { it.copy(speed = "Starting…", eta = "") }
-            val jobId = ApiService.startDownload(
-                videoUrl = req.url,
-                container = req.container,
-                quality = req.quality,
-                customServerUrl = req.serverUrl
+            updateItem(item.id) { it.copy(speed = "Starting on-device…", eta = "") }
+
+            val isAudio = req.container.uppercase() in listOf("MP3", "M4A", "FLAC", "WAV", "OGG", "OPUS")
+            val qualityMap = mapOf(
+                "Best"       to "bestvideo+bestaudio/best",
+                "4K (2160p)" to "bestvideo[height<=2160]+bestaudio/best[height<=2160]/bestvideo+bestaudio/best",
+                "2K (1440p)" to "bestvideo[height<=1440]+bestaudio/best[height<=1440]/bestvideo+bestaudio/best",
+                "1080p"      to "bestvideo[height<=1080]+bestaudio/best[height<=1080]/bestvideo+bestaudio/best",
+                "720p"       to "bestvideo[height<=720]+bestaudio/best[height<=720]/bestvideo+bestaudio/best",
+                "480p"       to "bestvideo[height<=480]+bestaudio/best[height<=480]/bestvideo+bestaudio/best",
+                "360p"       to "bestvideo[height<=360]+bestaudio/best[height<=360]/bestvideo+bestaudio/best",
             )
 
-            // 2. Poll progress from server
-            var isFinished = false
-            var serverFilename = "download_${req.id}.${req.container.lowercase()}"
+            val ytdlRequest = YoutubeDLRequest(req.url).apply {
+                addOption("-o", "${outDir.absolutePath}/%(title)s.%(ext)s")
+                addOption("--newline")
+                addOption("--no-mtime")
 
-            while (!isFinished && currentCoroutineContext().isActive) {
-                delay(1200)
-                try {
-                    val statusJson = ApiService.getStatus(jobId, req.serverUrl)
-                    val status = statusJson.optString("status", "")
-                    val progress = statusJson.optInt("progress", 0)
-                    val speed = statusJson.optString("speed", "")
-                    val eta = statusJson.optString("eta", "")
-                    val title = statusJson.optString("title", "")
-                    val filename = statusJson.optString("filename", "")
-
-                    if (filename.isNotBlank()) {
-                        serverFilename = filename
-                    }
-
-                    if (title.isNotBlank() && item.videoInfo.title.isBlank()) {
-                        updateItem(item.id) {
-                            it.copy(videoInfo = it.videoInfo.copy(title = title))
-                        }
-                    }
-
-                    when (status) {
-                        "downloading" -> {
-                            updateItem(item.id) {
-                                it.copy(
-                                    status = DownloadStatus.DOWNLOADING,
-                                    progress = progress,
-                                    speed = speed,
-                                    eta = eta
-                                )
-                            }
-                            updateNotification("Downloading: $progress% ($speed)")
-                        }
-                        "processing" -> {
-                            updateItem(item.id) {
-                                it.copy(
-                                    status = DownloadStatus.POST_PROCESSING,
-                                    progress = 95,
-                                    speed = "Merging audio/video…",
-                                    eta = ""
-                                )
-                            }
-                            updateNotification("Processing high quality merge…")
-                        }
-                        "done" -> {
-                            isFinished = true
-                        }
-                        "error" -> {
-                            val err = statusJson.optString("error", "Server download failed")
-                            throw Exception(err)
-                        }
-                    }
-                } catch (e: Exception) {
-                    if (e is CancellationException) throw e
-                    // Continue polling unless error state
+                if (isAudio) {
+                    addOption("-f", "bestaudio/best")
+                    addOption("-x")
+                    addOption("--audio-format", req.container.lowercase())
+                    addOption("--audio-quality", "0")
+                } else {
+                    val fmt = qualityMap[req.quality] ?: "bestvideo+bestaudio/best"
+                    addOption("-f", fmt)
+                    addOption("--merge-output-format", req.container.lowercase())
                 }
             }
 
-            // 3. Download the merged file directly to local storage
-            val cleanFilename = serverFilename.replace("[/\\\\?%*:|\"<>]".toRegex(), "_")
-            val targetFile = File(outDir, cleanFilename)
+            val pctPattern = Pattern.compile("(\\d+\\.?\\d*)%")
+            val speedPattern = Pattern.compile("(\\d+\\.?\\d*\\s*[KMG]iB/s)")
+            val etaPattern = Pattern.compile("ETA\\s+([\\d:]+)")
 
-            updateItem(item.id) {
-                it.copy(
-                    status = DownloadStatus.DOWNLOADING,
-                    progress = 98,
-                    speed = "Saving to phone…",
-                    eta = ""
-                )
-            }
+            YoutubeDL.getInstance().execute(ytdlRequest, req.id) { progress, etaInSeconds, line ->
+                val mPct = pctPattern.matcher(line)
+                val mSpeed = speedPattern.matcher(line)
+                val mEta = etaPattern.matcher(line)
 
-            ApiService.downloadFile(jobId, targetFile, req.serverUrl) { pct, spd ->
-                updateItem(item.id) {
-                    it.copy(progress = pct, speed = spd)
+                val pct = if (mPct.find()) mPct.group(1)?.toFloatOrNull()?.toInt() ?: progress.toInt() else progress.toInt()
+                val speed = if (mSpeed.find()) mSpeed.group(1) ?: "" else ""
+                val eta = if (mEta.find()) mEta.group(1) ?: "" else if (etaInSeconds > 0) "${etaInSeconds}s" else ""
+
+                if (line.contains("Destination:") || line.contains("Merging") || line.contains("ExtractAudio")) {
+                    updateItem(item.id) { it.copy(status = DownloadStatus.POST_PROCESSING, speed = "Merging streams…") }
+                } else {
+                    updateItem(item.id) {
+                        it.copy(
+                            status = DownloadStatus.DOWNLOADING,
+                            progress = pct.coerceIn(0, 100),
+                            speed = speed,
+                            eta = eta
+                        )
+                    }
                 }
+                updateNotification("Downloading: $pct% ($speed)")
             }
 
-            // Scan file with MediaStore so it appears in Gallery/Videos/Music
-            MediaScannerConnection.scanFile(
-                applicationContext,
-                arrayOf(targetFile.absolutePath),
-                null
-            ) { _, _ -> }
+            // Scan directory for new file
+            val latestFile = outDir.listFiles()?.filter { it.isFile }?.maxByOrNull { it.lastModified() }
+            if (latestFile != null) {
+                MediaScannerConnection.scanFile(
+                    applicationContext,
+                    arrayOf(latestFile.absolutePath),
+                    null
+                ) { _, _ -> }
+            }
 
             updateItem(item.id) {
                 it.copy(
@@ -201,14 +192,16 @@ class DownloadService : Service() {
                     progress = 100,
                     speed = "",
                     eta = "",
-                    localFilePath = targetFile.absolutePath
+                    localFilePath = latestFile?.absolutePath
                 )
             }
-            updateNotification("Downloaded: ${targetFile.name}")
+            updateNotification("Downloaded: ${latestFile?.name ?: "Complete"}")
 
         } catch (e: CancellationException) {
+            YoutubeDL.getInstance().destroyProcessById(req.id)
             updateItem(item.id) { it.copy(status = DownloadStatus.CANCELLED) }
         } catch (e: Exception) {
+            Log.e(TAG, "On-device download error: ${e.message}", e)
             updateItem(item.id) {
                 it.copy(
                     status = DownloadStatus.ERROR,
@@ -224,6 +217,97 @@ class DownloadService : Service() {
         }
     }
 
+    /**
+     * Remote / Custom Server Download (if user enabled in settings)
+     */
+    private suspend fun runRemoteServerDownload(req: DownloadRequest, item: DownloadItem, outDir: File) {
+        try {
+            updateItem(item.id) { it.copy(speed = "Connecting server…", eta = "") }
+            val jobId = ApiService.startDownload(
+                videoUrl = req.url,
+                container = req.container,
+                quality = req.quality,
+                customServerUrl = req.serverUrl
+            )
+
+            var isFinished = false
+            var serverFilename = "download_${req.id}.${req.container.lowercase()}"
+
+            while (!isFinished && currentCoroutineContext().isActive) {
+                delay(1200)
+                try {
+                    val statusJson = ApiService.getStatus(jobId, req.serverUrl)
+                    val status = statusJson.optString("status", "")
+                    val progress = statusJson.optInt("progress", 0)
+                    val speed = statusJson.optString("speed", "")
+                    val eta = statusJson.optString("eta", "")
+                    val title = statusJson.optString("title", "")
+                    val filename = statusJson.optString("filename", "")
+
+                    if (filename.isNotBlank()) serverFilename = filename
+
+                    when (status) {
+                        "downloading" -> {
+                            updateItem(item.id) {
+                                it.copy(
+                                    status = DownloadStatus.DOWNLOADING,
+                                    progress = progress,
+                                    speed = speed,
+                                    eta = eta
+                                )
+                            }
+                        }
+                        "processing" -> {
+                            updateItem(item.id) {
+                                it.copy(
+                                    status = DownloadStatus.POST_PROCESSING,
+                                    progress = 95,
+                                    speed = "Merging streams…",
+                                    eta = ""
+                                )
+                            }
+                        }
+                        "done" -> isFinished = true
+                        "error" -> throw Exception(statusJson.optString("error", "Server download failed"))
+                    }
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                }
+            }
+
+            val cleanFilename = serverFilename.replace("[/\\\\?%*:|\"<>]".toRegex(), "_")
+            val targetFile = File(outDir, cleanFilename)
+
+            ApiService.downloadFile(jobId, targetFile, req.serverUrl) { pct, spd ->
+                updateItem(item.id) { it.copy(progress = pct, speed = spd) }
+            }
+
+            MediaScannerConnection.scanFile(
+                applicationContext,
+                arrayOf(targetFile.absolutePath),
+                null
+            ) { _, _ -> }
+
+            updateItem(item.id) {
+                it.copy(
+                    status = DownloadStatus.DONE,
+                    progress = 100,
+                    speed = "",
+                    eta = "",
+                    localFilePath = targetFile.absolutePath
+                )
+            }
+        } catch (e: CancellationException) {
+            updateItem(item.id) { it.copy(status = DownloadStatus.CANCELLED) }
+        } catch (e: Exception) {
+            updateItem(item.id) {
+                it.copy(status = DownloadStatus.ERROR, errorMessage = e.message ?: "Download failed")
+            }
+        } finally {
+            activeJobs.remove(req.id)
+        }
+    }
+
     private fun updateItem(id: String, transform: (DownloadItem) -> DownloadItem) {
         _items.update { list ->
             list.map { if (it.id == id) transform(it) else it }
@@ -233,6 +317,11 @@ class DownloadService : Service() {
     fun cancelItem(id: String) {
         activeJobs[id]?.cancel()
         activeJobs.remove(id)
+        try {
+            YoutubeDL.getInstance().destroyProcessById(id)
+        } catch (e: Exception) {
+            // ignore
+        }
         updateItem(id) { it.copy(status = DownloadStatus.CANCELLED) }
     }
 

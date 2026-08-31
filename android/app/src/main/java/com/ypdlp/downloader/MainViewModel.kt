@@ -6,6 +6,8 @@ import android.media.MediaScannerConnection
 import android.os.IBinder
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.yausername.youtubedl_android.YoutubeDL
+import com.yausername.youtubedl_android.YoutubeDLRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -23,7 +25,7 @@ data class UiState(
     val selectedType: DownloadType = DownloadType.VIDEO,
     val selectedQuality: String = "1080p",
     val selectedContainer: String = "MP4",
-    val serverUrl: String = ApiService.DEFAULT_SERVER_URL,
+    val serverUrl: String = "", // Empty means 100% On-Device Standalone Engine
     val downloadedFiles: List<DownloadedFile> = emptyList(),
     val isScanningFiles: Boolean = false,
 )
@@ -37,7 +39,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     private val _ui = MutableStateFlow(
         UiState(
-            serverUrl = prefs.getString("server_url", ApiService.DEFAULT_SERVER_URL) ?: ApiService.DEFAULT_SERVER_URL
+            serverUrl = prefs.getString("server_url", "") ?: ""
         )
     )
     val ui = _ui.asStateFlow()
@@ -45,10 +47,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val _queue = MutableStateFlow<List<DownloadItem>>(emptyList())
     val queue = _queue.asStateFlow()
 
-    // Background playback state
     val playerState = MediaPlaybackService.playerState
 
-    // Service binding
     private var downloadService: DownloadService? = null
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, binder: IBinder) {
@@ -56,7 +56,6 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             viewModelScope.launch {
                 downloadService!!.items.collect { items ->
                     _queue.value = items
-                    // When any download finishes, reload downloaded files list
                     if (items.any { it.status == DownloadStatus.DONE }) {
                         loadDownloadedFiles()
                     }
@@ -73,7 +72,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         loadDownloadedFiles()
     }
 
-    // ── URL & Metadata Fetching ───────────────────────────────────────────────
+    // ── URL & Info Fetching ───────────────────────────────────────────────────
 
     fun onUrlChange(v: String) {
         val trimmed = v.trim()
@@ -104,19 +103,58 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             )
         }
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
-                if (_ui.value.isPlaylistMode || url.contains("list=") || url.contains("/playlist")) {
-                    val playlist = ApiService.fetchPlaylistInfo(url, _ui.value.serverUrl)
+                // If on-device standalone engine is ready and no custom server is specified:
+                if (YPDlpApp.isStandaloneEngineReady && _ui.value.serverUrl.isBlank()) {
+                    val req = YoutubeDLRequest(url)
+                    val ytdlInfo = YoutubeDL.getInstance().getInfo(req)
+
+                    val durationSecs = ytdlInfo.duration.toLong()
+                    val videoInfo = VideoInfo(
+                        url = ytdlInfo.url ?: url,
+                        title = ytdlInfo.title ?: "Unknown Title",
+                        channel = ytdlInfo.uploader ?: "",
+                        durationSeconds = durationSecs,
+                        thumbnailUrl = ytdlInfo.thumbnail ?: "",
+                        viewCount = ytdlInfo.viewCount ?: 0L
+                    )
+
                     _ui.update {
                         it.copy(
-                            playlistInfo = playlist,
-                            isPlaylistMode = true,
+                            videoInfo = videoInfo,
+                            isPlaylistMode = false,
                             isLoadingInfo = false
                         )
                     }
                 } else {
-                    val video = ApiService.fetchVideoInfo(url, _ui.value.serverUrl)
+                    // Use backend server (local PC or remote)
+                    val server = _ui.value.serverUrl.ifBlank { ApiService.DEFAULT_SERVER_URL }
+                    if (_ui.value.isPlaylistMode || url.contains("list=") || url.contains("/playlist")) {
+                        val playlist = ApiService.fetchPlaylistInfo(url, server)
+                        _ui.update {
+                            it.copy(
+                                playlistInfo = playlist,
+                                isPlaylistMode = true,
+                                isLoadingInfo = false
+                            )
+                        }
+                    } else {
+                        val video = ApiService.fetchVideoInfo(url, server)
+                        _ui.update {
+                            it.copy(
+                                videoInfo = video,
+                                isPlaylistMode = false,
+                                isLoadingInfo = false
+                            )
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                // Fallback attempt via API service if on-device threw an error
+                try {
+                    val server = _ui.value.serverUrl.ifBlank { ApiService.DEFAULT_SERVER_URL }
+                    val video = ApiService.fetchVideoInfo(url, server)
                     _ui.update {
                         it.copy(
                             videoInfo = video,
@@ -124,19 +162,19 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                             isLoadingInfo = false
                         )
                     }
-                }
-            } catch (e: Exception) {
-                _ui.update {
-                    it.copy(
-                        isLoadingInfo = false,
-                        infoError = e.message ?: "Failed to fetch metadata. Check internet or server connection."
-                    )
+                } catch (fallbackEx: Exception) {
+                    _ui.update {
+                        it.copy(
+                            isLoadingInfo = false,
+                            infoError = e.message ?: fallbackEx.message ?: "Failed to fetch video details"
+                        )
+                    }
                 }
             }
         }
     }
 
-    // ── Format Selectors ──────────────────────────────────────────────────────
+    // ── Selectors ─────────────────────────────────────────────────────────────
 
     fun setType(t: DownloadType) {
         val container = if (t == DownloadType.VIDEO) "MP4" else "MP3"
@@ -152,7 +190,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         _ui.update { it.copy(serverUrl = clean) }
     }
 
-    // ── Queue Management ──────────────────────────────────────────────────────
+    // ── Queue ─────────────────────────────────────────────────────────────────
 
     fun addToQueue() {
         val info = _ui.value.videoInfo ?: return
@@ -187,14 +225,14 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun cancelItem(id: String) = downloadService?.cancelItem(id)
     fun clearDone()            = downloadService?.clearDone()
 
-    // ── Downloaded Files Library Management ───────────────────────────────────
+    // ── Library ───────────────────────────────────────────────────────────────
 
     fun loadDownloadedFiles() {
         viewModelScope.launch(Dispatchers.IO) {
             _ui.update { it.copy(isScanningFiles = true) }
             val downloadDir = DownloadService.getDownloadDirectory(getApplication())
             val validExts = setOf("mp4", "mkv", "webm", "avi", "mp3", "m4a", "flac", "wav", "ogg", "opus")
-            
+
             val filesList = mutableListOf<DownloadedFile>()
             if (downloadDir.exists() && downloadDir.isDirectory) {
                 downloadDir.listFiles()?.filter { it.isFile && it.extension.lowercase() in validExts }
@@ -241,8 +279,6 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    // ── Media Playback Actions ────────────────────────────────────────────────
-
     fun playMediaFile(file: DownloadedFile) {
         val context = getApplication<Application>()
         val intent = Intent(context, MediaPlaybackService::class.java).apply {
@@ -266,13 +302,6 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             action = MediaPlaybackService.ACTION_STOP
         }
         context.startService(intent)
-    }
-
-    fun seekPlayback(posMs: Long) {
-        val context = getApplication<Application>()
-        downloadService?.let {
-            // seek handled directly via bound or service
-        }
     }
 
     override fun onCleared() {

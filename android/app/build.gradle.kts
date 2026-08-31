@@ -13,16 +13,18 @@ android {
         applicationId = "com.ypdlp.downloader"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.0.2"
+        versionCode = 3
+        versionName = "1.0.3"
+
+        ndk {
+            abiFilters.addAll(setOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64"))
+        }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
         create("release") {
-            // Use standard debug keystore for release if no custom keystore is configured
-            // This ensures release APKs are signed and installable on ANY Android phone
             storeFile = file("${System.getProperty("user.home")}/.android/debug.keystore")
             storePassword = "androiddebugkey"
             keyAlias = "androiddebugkey"
@@ -33,7 +35,6 @@ android {
     buildTypes {
         debug {
             isMinifyEnabled = false
-            // Avoid testOnly flag so APK can be installed directly on other physical devices
             manifestPlaceholders["testOnly"] = false
         }
         release {
@@ -74,5 +75,10 @@ dependencies {
     implementation(libs.ktor.serialization.kotlinx.json)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.kotlinx.coroutines.android)
+
+    // 100% On-Device Standalone Engine (Embedded yt-dlp + embedded FFmpeg)
+    implementation("com.github.yausername.youtubedl-android:library:0.17.4")
+    implementation("com.github.yausername.youtubedl-android:ffmpeg:0.17.4")
+
     debugImplementation(libs.androidx.ui.tooling)
 }

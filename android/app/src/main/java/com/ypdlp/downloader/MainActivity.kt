@@ -1289,17 +1289,31 @@ fun ServerSettingsDialog(currentServer: String, onDismiss: () -> Unit, onSave: (
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Backend Server Settings", fontWeight = FontWeight.Bold, color = TextPure) },
+        title = { Text("Download Engine Settings", fontWeight = FontWeight.Bold, color = TextPure) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = LiquidCyan.copy(alpha = 0.12f),
+                    border = BorderStroke(1.dp, LiquidCyan.copy(alpha = 0.3f))
+                ) {
+                    Text(
+                        "⚡ 100% On-Device Standalone Engine:\nDownloads, extracts, and merges videos directly on your phone's processor. No PC, Render, or server needed!",
+                        fontSize = 11.sp,
+                        color = Color.White,
+                        modifier = Modifier.padding(10.dp)
+                    )
+                }
+
                 Text(
-                    "Set the backend download server URL (defaults to live Render cloud server or local Wi-Fi IP):",
+                    "Optional: Custom Server URL (Leave empty for on-device engine):",
                     fontSize = 12.sp,
                     color = TextMuted
                 )
                 OutlinedTextField(
                     value = text,
                     onValueChange = { text = it },
+                    placeholder = { Text("Leave empty for on-device mode", color = TextDim, fontSize = 12.sp) },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = LiquidCyan,
@@ -1309,8 +1323,11 @@ fun ServerSettingsDialog(currentServer: String, onDismiss: () -> Unit, onSave: (
                     ),
                     shape = RoundedCornerShape(12.dp)
                 )
-                TextButton(onClick = { text = ApiService.DEFAULT_SERVER_URL }) {
-                    Text("Reset to Default Cloud Server", fontSize = 11.sp, color = LiquidCyan)
+
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = { text = "" }) {
+                        Text("✔ On-Device Mode (Default)", fontSize = 11.sp, color = LiquidCyan)
+                    }
                 }
             }
         },
