@@ -1,17 +1,19 @@
 # YPDlp — YouTube Downloader
 
 [![Website](https://img.shields.io/badge/🌐_Live_Website-Visit_Now-ff0000?style=for-the-badge)](https://yt-downloader-ccm6.onrender.com)
+[![GitHub Release](https://img.shields.io/badge/📦_Latest_Release-v1.0.11-success?style=for-the-badge&logo=github)](https://github.com/AbhijeetArjeet/yt_downloader/releases/tag/v1.0.11)
 [![GitHub](https://img.shields.io/badge/GitHub-AbhijeetArjeet-181717?style=for-the-badge&logo=github)](https://github.com/AbhijeetArjeet/yt_downloader)
 
 A full-featured YouTube downloader available as a **PC desktop app**, **Android app**, and **Website**.
 
-### 🔗 Quick Links
+### 🔗 Quick Links & Downloads
 
-| Platform | Link |
-|----------|------|
+| Platform | Link / Direct Download |
+|----------|------------------------|
+| 📱 **Android App (APK)** | [**Download YPDlp_Android_v1.0.11.apk**](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.11/YPDlp_Android_v1.0.11.apk) |
+| 🖥️ **Windows Desktop (x64)** | [**Download YPDlp_Windows_x64.zip**](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.11/YPDlp_Windows_x64.zip) |
 | 🌐 **Website** | [**yt-downloader-ccm6.onrender.com**](https://yt-downloader-ccm6.onrender.com) |
-| 🖥️ **Desktop** | [Source Code](https://github.com/AbhijeetArjeet/yt_downloader/tree/main/desktop) |
-| 📱 **Android** | [Source Code](https://github.com/AbhijeetArjeet/yt_downloader/tree/main/android) |
+| 📦 **All Releases** | [**GitHub Releases Page**](https://github.com/AbhijeetArjeet/yt_downloader/releases) |
 
 ---
 
