@@ -77,8 +77,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
 
     // 100% On-Device Standalone Engine (Embedded yt-dlp + embedded FFmpeg)
-    implementation("com.github.yausername.youtubedl-android:library:0.17.4")
-    implementation("com.github.yausername.youtubedl-android:ffmpeg:0.17.4")
+    implementation("com.github.yausername.youtubedl-android:library:0.14.0")
+    implementation("com.github.yausername.youtubedl-android:ffmpeg:0.14.0")
 
     debugImplementation(libs.androidx.ui.tooling)
 }
