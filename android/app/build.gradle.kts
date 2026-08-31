@@ -13,8 +13,8 @@ android {
         applicationId = "com.ypdlp.downloader"
         minSdk = 26
         targetSdk = 35
-        versionCode = 10
-        versionName = "1.0.10"
+        versionCode = 11
+        versionName = "1.0.11"
 
         ndk {
             abiFilters.addAll(setOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64"))
@@ -79,9 +79,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.kotlinx.coroutines.android)
 
-    // 100% On-Device Standalone Engine (Embedded yt-dlp + embedded FFmpeg)
-    implementation("com.github.yausername.youtubedl-android:library:0.14.0")
-    implementation("com.github.yausername.youtubedl-android:ffmpeg:0.14.0")
+    // 100% On-Device Standalone Engine (Embedded Python 3.11 + yt-dlp + embedded FFmpeg)
+    implementation("io.github.junkfood02.youtubedl-android:library:0.18.1")
+    implementation("io.github.junkfood02.youtubedl-android:ffmpeg:0.18.1")
 
     debugImplementation(libs.androidx.ui.tooling)
 }
