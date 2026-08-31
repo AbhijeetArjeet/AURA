@@ -1,24 +1,25 @@
 <div align="center">
 
-  <!-- Typing SVG Banner -->
+  <!-- Dynamic Waving Capsule Header -->
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&custom_color_list=0:090A0F,25:1E1B4B,50:312E81,75:0284C7,100:06B6D4&height=230&section=header&text=Abhijeet%20Arjeet&fontSize=48&fontAlignY=36&desc=%E2%9A%A1%20AI-Augmented%20Software%20Engineer%20%E2%80%A2%20On-Device%20%26%20Systems%20Builder&descAlignY=58&descAlign=50&fontColor=ffffff&descColor=94A3B8&animation=fadeIn" width="100%" alt="Header Banner" />
+
+  <!-- Animated Typing SVG with Cyan & Purple Neon Accents -->
   <a href="https://github.com/AbhijeetArjeet">
-    <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=26&duration=3000&pause=1000&color=38BDF8&center=true&vCenter=true&width=650&height=70&lines=Hi+there%2C+I'm+Abhijeet+Arjeet+%F0%9F%91%8B;AI-Augmented+Software+Engineer;Creator+of+YPDlp+%26+Open-Source+Tools;Leveraging+AI+to+Ship+High-Performance+Apps" alt="Typing SVG" />
+    <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=24&duration=2800&pause=1000&color=38BDF8&center=true&vCenter=true&width=680&height=60&lines=👋+Hello%2C+World!+I'm+Abhijeet+Arjeet;🤖+Pioneering+AI-Augmented+Software+Engineering;🎬+Creator+of+YPDlp+%E2%80%94+Standalone+Mobile+%26+Desktop+Suite;⚡+Crafting+High-Performance%2C+Privacy-First+Apps" alt="Typing Banner" />
   </a>
 
-  <p align="center">
-    🚀 <em>AI-Augmented Developer building high-performance desktop apps, mobile utilities, and developer tooling.</em>
-  </p>
+  <br />
 
-  <!-- Social & Profile Badges -->
+  <!-- Dynamic Profile Badges -->
   <p align="center">
     <a href="https://github.com/AbhijeetArjeet">
-      <img src="https://img.shields.io/badge/🤖_AI--Augmented-Engineer-8B5CF6?style=for-the-badge&logo=google&logoColor=white" alt="AI Augmented" />
+      <img src="https://img.shields.io/badge/🤖_AI--Augmented-Engineer-7C3AED?style=for-the-badge&logo=google&logoColor=white" alt="AI Engineer" />
     </a>
     <a href="https://github.com/AbhijeetArjeet?tab=repositories">
-      <img src="https://img.shields.io/badge/📦_Repositories-25+-blue?style=for-the-badge&logo=github&logoColor=white&color=2563EB" alt="Repositories" />
+      <img src="https://img.shields.io/badge/📦_Repositories-26_Projects-2563EB?style=for-the-badge&logo=github&logoColor=white" alt="Repositories" />
     </a>
     <a href="https://github.com/AbhijeetArjeet?tab=followers">
-      <img src="https://img.shields.io/github/followers/AbhijeetArjeet?label=Followers&style=for-the-badge&logo=github&color=7C3AED" alt="Followers" />
+      <img src="https://img.shields.io/github/followers/AbhijeetArjeet?label=Followers&style=for-the-badge&logo=github&color=059669" alt="Followers" />
     </a>
     <a href="https://github.com/AbhijeetArjeet">
       <img src="https://komarev.com/ghpvc/?username=AbhijeetArjeet&label=Profile%20Views&color=06B6D4&style=for-the-badge" alt="Profile Views" />
@@ -29,148 +30,173 @@
 
 ---
 
-### 💫 About Me
+### 💫 About Me & AI Workflow
 
 ```yaml
-name: Abhijeet Arjeet
-status: 🛠️ Building next-gen standalone apps & high-performance tools
-workflow: 🤖 AI-Augmented Development (Pair-programming with modern AI & LLM tooling)
-focus: [Android / Kotlin, Python Desktop, TypeScript / Web, Systems & Tooling]
-philosophy: "Leveraging modern AI to build zero-bloat, privacy-first, on-device software."
-interests: [AI-Assisted Engineering, Mobile Architecture, Reverse Engineering, Media Processing]
+developer:
+  name: Abhijeet Arjeet
+  title: AI-Augmented Software Engineer & Systems Developer
+  mindset: "Zero bloat, maximum performance, privacy-first on-device execution."
+  
+capabilities:
+  workflow: 🤖 AI-Accelerated Engineering (Pair-programming with LLMs, autonomous agents & prompt architecture)
+  core_stacks: [Android / Kotlin, Python / PyQt, TypeScript / Modern Web, Native Systems]
+  specialties: [High-Performance Media Pipelines, FFmpeg Muxing, Native JNI/NDK, Reverse Engineering]
+  current_focus: 🚀 Scaling standalone mobile utilities and intelligent campus software
 ```
 
 ---
 
-### 🚀 Pinned & Featured Projects
+### 🏆 GitHub Trophies & Achievements
+
+<div align="center">
+  <img src="https://github-profile-trophy.vercel.app/?username=AbhijeetArjeet&theme=tokyonight&no-frame=true&no-bg=true&margin_w=10&margin_h=10&column=6" alt="GitHub Trophies" />
+</div>
+
+---
+
+### 🚀 Pinned & Featured Original Projects
 
 <table>
   <tr>
     <td width="50%" valign="top">
-      <h3 align="center">🎬 YPDlp — Media Suite</h3>
-      <p align="center">
-        <a href="https://github.com/AbhijeetArjeet/yt_downloader">
-          <img src="https://img.shields.io/badge/Version-v1.0.12-success?style=flat-square&logo=github" />
-          <img src="https://img.shields.io/badge/Android-APK-3DDC84?style=flat-square&logo=android&logoColor=white" />
-          <img src="https://img.shields.io/badge/Windows-x64-0078D6?style=flat-square&logo=windows&logoColor=white" />
-        </a>
-      </p>
+      <div align="center">
+        <h3>🎬 YPDlp — On-Device Media Suite</h3>
+        <p>
+          <a href="https://github.com/AbhijeetArjeet/yt_downloader/releases">
+            <img src="https://img.shields.io/badge/Release-v1.0.12-10B981?style=flat-square&logo=github" />
+            <img src="https://img.shields.io/badge/Android-APK-3DDC84?style=flat-square&logo=android&logoColor=white" />
+            <img src="https://img.shields.io/badge/Windows-x64-0078D6?style=flat-square&logo=windows&logoColor=white" />
+          </a>
+        </p>
+      </div>
       <p>
-        <strong>High-Performance YouTube Downloader & Media Suite</strong> built for Android and Windows Desktop.
+        <strong>100% On-Device YouTube Downloader & Media Suite</strong> engineered for Android and Windows Desktop with zero server reliance.
       </p>
       <ul>
-        <li>💎 <strong>Liquid Crystal Glass UI</strong> with neon accents and fluid motion</li>
-        <li>⚡ 100% on-device standalone engine powered by <strong>Python 3.11 + QuickJS + FFmpeg</strong></li>
-        <li>🎬 Up to 4K resolution downloads, playlist batch processing & floating mini-player</li>
+        <li>💎 <strong>Liquid Crystal Glass UI:</strong> iOS-inspired frosted glass with glow animations</li>
+        <li>📺 <strong>In-App Video Player:</strong> Full-screen player with timeline scrubbing & +/-10s seek</li>
+        <li>⚡ <strong>Embedded Engines:</strong> Python 3.11 + QuickJS engine + bundled static FFmpeg</li>
+        <li>🎬 4K/1080p stream merging, batch playlists, and background audio service</li>
       </ul>
       <p align="center">
-        <a href="https://github.com/AbhijeetArjeet/yt_downloader"><strong>🔗 View Repository →</strong></a>
+        <a href="https://github.com/AbhijeetArjeet/yt_downloader"><strong>🔗 Explore Repository →</strong></a>
       </p>
     </td>
     <td width="50%" valign="top">
-      <h3 align="center">⚡ vayu-cpi</h3>
-      <p align="center">
-        <a href="https://github.com/AbhijeetArjeet/vayu-cpi">
-          <img src="https://img.shields.io/badge/Language-TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" />
-          <img src="https://img.shields.io/badge/Type-Utility-orange?style=flat-square" />
-        </a>
-      </p>
+      <div align="center">
+        <h3>⚡ vayu-cpi — Performance Engine</h3>
+        <p>
+          <a href="https://github.com/AbhijeetArjeet/vayu-cpi">
+            <img src="https://img.shields.io/badge/TypeScript-Strict%20Types-3178C6?style=flat-square&logo=typescript&logoColor=white" />
+            <img src="https://img.shields.io/badge/Performance-Ultra%20Fast-F59E0B?style=flat-square&logo=speedtest&logoColor=white" />
+          </a>
+        </p>
+      </div>
       <p>
-        <strong>Next-Gen Performance & Metrics Management Toolkit</strong> built with TypeScript for lightning-fast execution and real-time insights.
+        <strong>Next-Gen Performance & Metrics Computation Engine</strong> built with TypeScript for lightning-fast analysis.
       </p>
       <ul>
-        <li>📊 Type-safe performance computation and metric benchmarking</li>
-        <li>⚙️ Modular architecture with zero external runtime baggage</li>
-        <li>🚀 Designed for seamless developer integration</li>
+        <li>📊 Type-safe metric evaluation and benchmark profiling</li>
+        <li>⚙️ Zero external dependencies for maximum runtime agility</li>
+        <li>🚀 Modular design ready for seamless SDK integration</li>
       </ul>
       <p align="center">
-        <a href="https://github.com/AbhijeetArjeet/vayu-cpi"><strong>🔗 View Repository →</strong></a>
-      </p>
-    </td>
-  </tr>
-
-  <tr>
-    <td width="50%" valign="top">
-      <h3 align="center">📶 Wi-Fi Captive Portal Tester</h3>
-      <p align="center">
-        <a href="https://github.com/AbhijeetArjeet/wifi-portal-tester">
-          <img src="https://img.shields.io/badge/Platform-PWA-purple?style=flat-square&logo=pwa&logoColor=white" />
-          <img src="https://img.shields.io/badge/Stack-HTML5%20%2F%20JS-F7DF1E?style=flat-square&logo=javascript&logoColor=black" />
-        </a>
-      </p>
-      <p>
-        <strong>Mobile-first Progressive Web App (PWA)</strong> engineered to diagnose and test captive portal Wi-Fi login mechanisms.
-      </p>
-      <ul>
-        <li>📱 Responsive, mobile-first diagnosis interface</li>
-        <li>🔍 Rapid detection of portal redirects & authentication states</li>
-        <li>⚡ Instant offline caching via Service Workers</li>
-      </ul>
-      <p align="center">
-        <a href="https://github.com/AbhijeetArjeet/wifi-portal-tester"><strong>🔗 View Repository →</strong></a>
-      </p>
-    </td>
-    <td width="50%" valign="top">
-      <h3 align="center">⏰ Dual-Boot Clock Fix</h3>
-      <p align="center">
-        <a href="https://github.com/AbhijeetArjeet/dualboot-clock-fix">
-          <img src="https://img.shields.io/badge/PowerShell-Script-5391FE?style=flat-square&logo=powershell&logoColor=white" />
-          <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" />
-        </a>
-      </p>
-      <p>
-        <strong>One-Click Fix for Windows/Linux Dual-Boot Clock Desync</strong> (RTC local time vs UTC).
-      </p>
-      <ul>
-        <li>🛠️ Automates Windows RealTimeIsUniversal registry configuration</li>
-        <li>⏱️ Eliminates manual time adjustments after booting between OSes</li>
-        <li>🛡️ Safe, lightweight, and reversible PowerShell script</li>
-      </ul>
-      <p align="center">
-        <a href="https://github.com/AbhijeetArjeet/dualboot-clock-fix"><strong>🔗 View Repository →</strong></a>
+        <a href="https://github.com/AbhijeetArjeet/vayu-cpi"><strong>🔗 Explore Repository →</strong></a>
       </p>
     </td>
   </tr>
 
   <tr>
     <td width="50%" valign="top">
-      <h3 align="center">🏫 Smart Campus OS (SCNFMRA)</h3>
-      <p align="center">
-        <a href="https://github.com/AbhijeetArjeet/python-project-year-one">
-          <img src="https://img.shields.io/badge/Python-3.x-3776AB?style=flat-square&logo=python&logoColor=white" />
-          <img src="https://img.shields.io/badge/Status-Active-brightgreen?style=flat-square" />
-        </a>
-      </p>
+      <div align="center">
+        <h3>📶 Wi-Fi Captive Portal Tester</h3>
+        <p>
+          <a href="https://github.com/AbhijeetArjeet/wifi-portal-tester">
+            <img src="https://img.shields.io/badge/Platform-PWA%20Mobile%20First-8B5CF6?style=flat-square&logo=pwa&logoColor=white" />
+            <img src="https://img.shields.io/badge/Stack-JavaScript%20%2F%20HTML5-F7DF1E?style=flat-square&logo=javascript&logoColor=black" />
+          </a>
+        </p>
+      </div>
       <p>
-        <strong>Smart Campus Navigation, Facility Management, Resource & Analytics</strong> information system.
+        <strong>Mobile-first Progressive Web App (PWA)</strong> engineered to diagnose, simulate, and troubleshoot captive portal Wi-Fi authentication.
       </p>
       <ul>
-        <li>🗺️ Campus routing & building facility locator</li>
-        <li>📊 Resource utilization tracking and live analytics</li>
-        <li>💻 Available in modular and fast single-file CLI editions (<a href="https://github.com/AbhijeetArjeet/python-project-year1-v2">v2</a>)</li>
+        <li>📱 Touch-optimized responsive interface with dark mode</li>
+        <li>🔍 Automatic detection of portal redirects & gateway handshakes</li>
+        <li>⚡ Works 100% offline via Service Worker caching</li>
       </ul>
       <p align="center">
-        <a href="https://github.com/AbhijeetArjeet/python-project-year-one"><strong>🔗 View Repository →</strong></a>
+        <a href="https://github.com/AbhijeetArjeet/wifi-portal-tester"><strong>🔗 Explore Repository →</strong></a>
       </p>
     </td>
     <td width="50%" valign="top">
-      <h3 align="center">📋 Attendance Management System</h3>
-      <p align="center">
-        <a href="https://github.com/AbhijeetArjeet/attendance-system">
-          <img src="https://img.shields.io/badge/Stack-Node.js%20%2F%20Express-339933?style=flat-square&logo=nodedotjs&logoColor=white" />
-          <img src="https://img.shields.io/badge/Frontend-Vanilla%20JS%20%2F%20CSS-F7DF1E?style=flat-square&logo=javascript&logoColor=black" />
-        </a>
-      </p>
+      <div align="center">
+        <h3>⏰ Dual-Boot Clock Fix</h3>
+        <p>
+          <a href="https://github.com/AbhijeetArjeet/dualboot-clock-fix">
+            <img src="https://img.shields.io/badge/Tool-PowerShell%20Script-5391FE?style=flat-square&logo=powershell&logoColor=white" />
+            <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" />
+          </a>
+        </p>
+      </div>
       <p>
-        <strong>Full-Stack Attendance & Record Management Platform</strong> designed for fast classroom and session tracking.
+        <strong>One-Click Fix for Windows & Linux Dual-Boot Clock Desync</strong> (Hardware RTC Local Time vs UTC mismatch).
       </p>
       <ul>
-        <li>📊 Real-time student attendance logging and status calculation</li>
-        <li>🔐 RESTful backend API for record persistence and analytics</li>
-        <li>📱 Responsive, clean user interface with instant query lookup</li>
+        <li>🛠️ Automates `RealTimeIsUniversal` Windows registry synchronization</li>
+        <li>⏱️ Eliminates manual clock adjustments across OS reboots</li>
+        <li>🛡️ Safe, non-destructive, and reversible automation</li>
       </ul>
       <p align="center">
-        <a href="https://github.com/AbhijeetArjeet/attendance-system"><strong>🔗 View Repository →</strong></a>
+        <a href="https://github.com/AbhijeetArjeet/dualboot-clock-fix"><strong>🔗 Explore Repository →</strong></a>
+      </p>
+    </td>
+  </tr>
+
+  <tr>
+    <td width="50%" valign="top">
+      <div align="center">
+        <h3>🏫 Smart Campus OS (SCNFMRA)</h3>
+        <p>
+          <a href="https://github.com/AbhijeetArjeet/python-project-year-one">
+            <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white" />
+            <img src="https://img.shields.io/badge/Edition-CLI%20%2B%20Modular-brightgreen?style=flat-square" />
+          </a>
+        </p>
+      </div>
+      <p>
+        <strong>Intelligent Campus Navigation & Facility Analytics System</strong> designed for resource allocation and live routing.
+      </p>
+      <ul>
+        <li>🗺️ Smart route planning and campus facility locator</li>
+        <li>📊 Resource utilization metrics and occupancy data</li>
+        <li>💻 Available in full modular architecture and streamlined single-file CLI (<a href="https://github.com/AbhijeetArjeet/python-project-year1-v2">v2</a>)</li>
+      </ul>
+      <p align="center">
+        <a href="https://github.com/AbhijeetArjeet/python-project-year-one"><strong>🔗 Explore Repository →</strong></a>
+      </p>
+    </td>
+    <td width="50%" valign="top">
+      <div align="center">
+        <h3>📋 Attendance Management System</h3>
+        <p>
+          <a href="https://github.com/AbhijeetArjeet/attendance-system">
+            <img src="https://img.shields.io/badge/Backend-Node.js%20%2F%20Express-339933?style=flat-square&logo=nodedotjs&logoColor=white" />
+            <img src="https://img.shields.io/badge/Frontend-Vanilla%20JS-F7DF1E?style=flat-square&logo=javascript&logoColor=black" />
+          </a>
+        </p>
+      </div>
+      <p>
+        <strong>Full-Stack Attendance & Session Management Platform</strong> engineered for classroom tracking and logging.
+      </p>
+      <ul>
+        <li>📊 Live student attendance records and percentage calculation</li>
+        <li>🔐 RESTful API with structured persistence & validation</li>
+        <li>📱 Clean, lightweight user interface with quick lookups</li>
+      </ul>
+      <p align="center">
+        <a href="https://github.com/AbhijeetArjeet/attendance-system"><strong>🔗 Explore Repository →</strong></a>
       </p>
     </td>
   </tr>
@@ -178,92 +204,62 @@ interests: [AI-Assisted Engineering, Mobile Architecture, Reverse Engineering, M
 
 ---
 
-### 🛠️ Tech Stack & Arsenal
+### 🛠️ Tech Arsenal & AI Tooling
 
 <div align="center">
 
-  <table>
-    <tr>
-      <td align="center" width="16%">
-        <img src="https://skillicons.dev/icons?i=kotlin" width="40" height="40" alt="Kotlin" /><br />
-        <sub><b>Kotlin / Android</b></sub>
-      </td>
-      <td align="center" width="16%">
-        <img src="https://skillicons.dev/icons?i=python" width="40" height="40" alt="Python" /><br />
-        <sub><b>Python / PyQt</b></sub>
-      </td>
-      <td align="center" width="16%">
-        <img src="https://skillicons.dev/icons?i=ts" width="40" height="40" alt="TypeScript" /><br />
-        <sub><b>TypeScript</b></sub>
-      </td>
-      <td align="center" width="16%">
-        <img src="https://skillicons.dev/icons?i=js" width="40" height="40" alt="JavaScript" /><br />
-        <sub><b>JavaScript / PWA</b></sub>
-      </td>
-      <td align="center" width="16%">
-        <img src="https://skillicons.dev/icons?i=rust" width="40" height="40" alt="Rust" /><br />
-        <sub><b>Rust</b></sub>
-      </td>
-      <td align="center" width="16%">
-        <img src="https://skillicons.dev/icons?i=powershell" width="40" height="40" alt="PowerShell" /><br />
-        <sub><b>PowerShell / Bash</b></sub>
-      </td>
-    </tr>
-    <tr>
-      <td align="center">
-        <img src="https://skillicons.dev/icons?i=html,css" width="40" height="40" alt="HTML5 / CSS3" /><br />
-        <sub><b>HTML5 / CSS3</b></sub>
-      </td>
-      <td align="center">
-        <img src="https://skillicons.dev/icons?i=react" width="40" height="40" alt="React" /><br />
-        <sub><b>React</b></sub>
-      </td>
-      <td align="center">
-        <img src="https://skillicons.dev/icons?i=nodejs" width="40" height="40" alt="Node.js" /><br />
-        <sub><b>Node.js</b></sub>
-      </td>
-      <td align="center">
-        <img src="https://skillicons.dev/icons?i=git,github" width="40" height="40" alt="Git & GitHub" /><br />
-        <sub><b>Git / GitHub</b></sub>
-      </td>
-      <td align="center">
-        <img src="https://skillicons.dev/icons?i=linux" width="40" height="40" alt="Linux" /><br />
-        <sub><b>Linux / Android NDK</b></sub>
-      </td>
-      <td align="center">
-        <img src="https://skillicons.dev/icons?i=vscode" width="40" height="40" alt="VS Code / Android Studio" /><br />
-        <sub><b>IDE & Tooling</b></sub>
-      </td>
-    </tr>
-  </table>
+  <p><b>Core Languages & Systems</b></p>
+  <a href="https://skillicons.dev">
+    <img src="https://skillicons.dev/icons?i=kotlin,python,ts,js,rust,powershell,bash,c" alt="Languages" />
+  </a>
+
+  <br /><br />
+
+  <p><b>Frameworks, Mobile & Media Engines</b></p>
+  <a href="https://skillicons.dev">
+    <img src="https://skillicons.dev/icons?i=androidstudio,qt,react,nodejs,express,html,css,tailwind" alt="Frameworks" />
+  </a>
+
+  <br /><br />
+
+  <p><b>AI-Augmented Tooling, Environments & Infrastructure</b></p>
+  <a href="https://skillicons.dev">
+    <img src="https://skillicons.dev/icons?i=vscode,linux,git,github,docker,postman,gradle" alt="Dev Tools" />
+  </a>
 
 </div>
 
 ---
 
-### 📊 GitHub Activity & Statistics
+### 📊 Real-Time Analytics & Streak Stats
 
 <div align="center">
+
   <table border="0">
     <tr>
       <td>
-        <img src="https://github-readme-stats.vercel.app/api?username=AbhijeetArjeet&show_icons=true&theme=tokyonight&hide_border=true&bg_color=0D1117&title_color=38BDF8&text_color=94A3B8&icon_color=38BDF8" alt="Abhijeet's GitHub Stats" height="175" />
+        <img src="https://github-readme-stats.vercel.app/api?username=AbhijeetArjeet&show_icons=true&theme=tokyonight&hide_border=true&bg_color=0D1117&title_color=38BDF8&text_color=94A3B8&icon_color=38BDF8&count_private=true" alt="GitHub Stats" height="185" />
       </td>
       <td>
-        <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=AbhijeetArjeet&layout=compact&theme=tokyonight&hide_border=true&bg_color=0D1117&title_color=38BDF8&text_color=94A3B8" alt="Top Languages" height="175" />
+        <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=AbhijeetArjeet&layout=compact&theme=tokyonight&hide_border=true&bg_color=0D1117&title_color=38BDF8&text_color=94A3B8" alt="Top Languages" height="185" />
       </td>
     </tr>
   </table>
 
   <br />
 
-  <img src="https://streak-stats.demolab.com?user=AbhijeetArjeet&theme=tokyonight&hide_border=true&background=0D1117&stroke=38BDF8&ring=38BDF8&fire=F59E0B&currStreakNum=38BDF8" alt="GitHub Streak" />
+  <img src="https://streak-stats.demolab.com?user=AbhijeetArjeet&theme=tokyonight&hide_border=true&background=0D1117&stroke=38BDF8&ring=38BDF8&fire=F59E0B&currStreakNum=38BDF8" alt="GitHub Streak Tracker" />
+
+  <br /><br />
+
+  <!-- Activity Contribution Graph -->
+  <img src="https://github-readme-activity-graph.vercel.app/graph?username=AbhijeetArjeet&theme=tokyo-night&hide_border=true&bg_color=0D1117&color=38BDF8&line=38BDF8&point=818CF8&area=true&hide_title=true" width="95%" alt="Activity Graph" />
 
 </div>
 
 ---
 
-### 🤝 Connect & Collaborate
+### 🤝 Let's Connect
 
 <div align="center">
 
@@ -280,5 +276,10 @@ interests: [AI-Assisted Engineering, Mobile Architecture, Reverse Engineering, M
   <br /><br />
 
   <sub><em>"Simplicity is the prerequisite for reliability."</em> — <b>Hachiman / Yukino Mode Activated ❄️</b></sub>
+
+  <br /><br />
+
+  <!-- Footer Waving Capsule -->
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&custom_color_list=0:06B6D4,25:0284C7,50:312E81,75:1E1B4B,100:090A0F&height=120&section=footer" width="100%" alt="Footer Wave" />
 
 </div>
