@@ -1,0 +1,210 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 380" width="100%" height="100%">
+  <defs>
+    <!-- Dark Space Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#05060A" />
+      <stop offset="30%" stop-color="#0B0F1D" />
+      <stop offset="70%" stop-color="#12102E" />
+      <stop offset="100%" stop-color="#070810" />
+    </linearGradient>
+
+    <!-- Animated Cyber Gradient Border -->
+    <linearGradient id="animatedBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00E5FF">
+        <animate attributeName="stop-color" values="#00E5FF;#7C3AED;#FF2A55;#00E5FF" dur="6s" repeatCount="indefinite" />
+      </stop>
+      <stop offset="50%" stop-color="#7C3AED">
+        <animate attributeName="stop-color" values="#7C3AED;#FF2A55;#00E5FF;#7C3AED" dur="6s" repeatCount="indefinite" />
+      </stop>
+      <stop offset="100%" stop-color="#FF2A55">
+        <animate attributeName="stop-color" values="#FF2A55;#00E5FF;#7C3AED;#FF2A55" dur="6s" repeatCount="indefinite" />
+      </stop>
+    </linearGradient>
+
+    <!-- Title Gradient -->
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="40%" stop-color="#E0F2FE" />
+      <stop offset="75%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#C084FC" />
+    </linearGradient>
+
+    <!-- Glowing Sphere Filters -->
+    <filter id="glowCyan" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="30" result="blur" />
+    </filter>
+    <filter id="glowPurple" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="35" result="blur" />
+    </filter>
+    <filter id="glowRed" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="25" result="blur" />
+    </filter>
+    <filter id="dropShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="#000000" flood-opacity="0.8" />
+    </filter>
+  </defs>
+
+  <style>
+    @keyframes blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1); opacity: 0.25; }
+      50% { transform: scale(1.15); opacity: 0.45; }
+    }
+    @keyframes slideRole1 {
+      0%, 22% { opacity: 1; transform: translateY(0px); }
+      25%, 100% { opacity: 0; transform: translateY(-20px); }
+    }
+    @keyframes slideRole2 {
+      0%, 24% { opacity: 0; transform: translateY(20px); }
+      27%, 48% { opacity: 1; transform: translateY(0px); }
+      51%, 100% { opacity: 0; transform: translateY(-20px); }
+    }
+    @keyframes slideRole3 {
+      0%, 50% { opacity: 0; transform: translateY(20px); }
+      53%, 73% { opacity: 1; transform: translateY(0px); }
+      76%, 100% { opacity: 0; transform: translateY(-20px); }
+    }
+    @keyframes slideRole4 {
+      0%, 75% { opacity: 0; transform: translateY(20px); }
+      78%, 96% { opacity: 1; transform: translateY(0px); }
+      99%, 100% { opacity: 0; transform: translateY(-20px); }
+    }
+    @keyframes floatBadge {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-5px); }
+    }
+
+    .cursor {
+      animation: blink 0.9s infinite;
+      fill: #38BDF8;
+    }
+    .role-1 { animation: slideRole1 12s infinite; }
+    .role-2 { animation: slideRole2 12s infinite; }
+    .role-3 { animation: slideRole3 12s infinite; }
+    .role-4 { animation: slideRole4 12s infinite; }
+    .badge-float-1 { animation: floatBadge 4s ease-in-out infinite; }
+    .badge-float-2 { animation: floatBadge 4s ease-in-out 1s infinite; }
+    .badge-float-3 { animation: floatBadge 4s ease-in-out 2s infinite; }
+    .badge-float-4 { animation: floatBadge 4s ease-in-out 3s infinite; }
+  </style>
+
+  <!-- Background Base -->
+  <rect width="1200" height="380" rx="24" fill="url(#bgGrad)" />
+
+  <!-- Animated Glowing Background Orbs -->
+  <g opacity="0.4">
+    <circle cx="180" cy="90" r="140" fill="#00E5FF" filter="url(#glowCyan)">
+      <animate attributeName="cx" values="180;220;180" dur="8s" repeatCount="indefinite" />
+    </circle>
+    <circle cx="1020" cy="200" r="170" fill="#7C3AED" filter="url(#glowPurple)">
+      <animate attributeName="cy" values="200;160;200" dur="9s" repeatCount="indefinite" />
+    </circle>
+    <circle cx="600" cy="340" r="120" fill="#FF2A55" filter="url(#glowRed)">
+      <animate attributeName="r" values="120;150;120" dur="7s" repeatCount="indefinite" />
+    </circle>
+  </g>
+
+  <!-- Cyber Grid Lines -->
+  <g opacity="0.07" stroke="#38BDF8" stroke-width="1">
+    <line x1="0" y1="76" x2="1200" y2="76" />
+    <line x1="0" y1="152" x2="1200" y2="152" />
+    <line x1="0" y1="228" x2="1200" y2="228" />
+    <line x1="0" y1="304" x2="1200" y2="304" />
+    <line x1="150" y1="0" x2="150" y2="380" />
+    <line x1="300" y1="0" x2="300" y2="380" />
+    <line x1="450" y1="0" x2="450" y2="380" />
+    <line x1="600" y1="0" x2="600" y2="380" />
+    <line x1="750" y1="0" x2="750" y2="380" />
+    <line x1="900" y1="0" x2="900" y2="380" />
+    <line x1="1050" y1="0" x2="1050" y2="380" />
+  </g>
+
+  <!-- Animated Neon Border -->
+  <rect x="3" y="3" width="1194" height="374" rx="22" fill="none" stroke="url(#animatedBorder)" stroke-width="3" />
+
+  <!-- Terminal Top Bar -->
+  <g transform="translate(60, 42)">
+    <rect width="1080" height="36" rx="10" fill="#0D111A" stroke="#1E293B" stroke-width="1" />
+    <circle cx="22" cy="18" r="6" fill="#FF5F56" />
+    <circle cx="42" cy="18" r="6" fill="#FFBD2E" />
+    <circle cx="62" cy="18" r="6" fill="#27C93F" />
+    <text x="85" y="23" font-family="'Fira Code', 'Courier New', monospace" font-size="13" font-weight="600" fill="#64748B">abhijeet@archlinux: ~ (main) ⚡ AI_COGNITION_ONLINE</text>
+    <g transform="translate(930, 8)">
+      <rect width="130" height="20" rx="10" fill="#10B981" fill-opacity="0.15" stroke="#10B981" stroke-width="1" />
+      <circle cx="12" cy="10" r="4" fill="#10B981" />
+      <text x="24" y="14" font-family="system-ui, sans-serif" font-size="10" font-weight="700" fill="#10B981">LIVE PORTFOLIO</text>
+    </g>
+  </g>
+
+  <!-- Main Hero Title -->
+  <g transform="translate(60, 150)">
+    <text x="0" y="0" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="900" letter-spacing="2px" fill="url(#textGrad)" filter="url(#dropShadow)">ABHIJEET ARJEET</text>
+    <text x="500" y="-8" font-family="'Fira Code', monospace" font-size="16" font-weight="700" fill="#38BDF8">v1.0.12</text>
+  </g>
+
+  <!-- Dynamic Sliding Roles with Terminal Cursor -->
+  <g transform="translate(60, 195)">
+    <g class="role-1">
+      <text x="0" y="0" font-family="'Fira Code', monospace" font-size="22" font-weight="600" fill="#38BDF8">⚡ AI-Augmented Software Engineer &amp; Systems Developer</text>
+    </g>
+    <g class="role-2">
+      <text x="0" y="0" font-family="'Fira Code', monospace" font-size="22" font-weight="600" fill="#A855F7">🎬 Creator of YPDlp — On-Device Mobile &amp; Desktop Media Suite</text>
+    </g>
+    <g class="role-3">
+      <text x="0" y="0" font-family="'Fira Code', monospace" font-size="22" font-weight="600" fill="#3DDC84">📱 Android (Kotlin / NDK) • Python (PyQt6) • TypeScript • Web</text>
+    </g>
+    <g class="role-4">
+      <text x="0" y="0" font-family="'Fira Code', monospace" font-size="22" font-weight="600" fill="#F43F5E">🚀 Zero Bloat • On-Device Engine • Privacy-First Architecture</text>
+    </g>
+    <!-- Blinking Cursor -->
+    <rect x="740" y="-18" width="10" height="22" rx="2" class="cursor" />
+  </g>
+
+  <!-- Subtitle Tagline -->
+  <text x="60" y="238" font-family="system-ui, sans-serif" font-size="15" fill="#94A3B8">Pioneering AI pair-programming to craft lightning-fast standalone applications and developer utilities.</text>
+
+  <!-- Interactive Floating Tech Stack Badges -->
+  <g transform="translate(60, 275)">
+    <!-- Badge 1 -->
+    <g class="badge-float-1" transform="translate(0, 0)">
+      <rect width="180" height="42" rx="12" fill="#0E1726" stroke="#3DDC84" stroke-width="1.5" />
+      <circle cx="22" cy="21" r="7" fill="#3DDC84" />
+      <text x="38" y="26" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">Android &amp; Kotlin</text>
+    </g>
+
+    <!-- Badge 2 -->
+    <g class="badge-float-2" transform="translate(195, 0)">
+      <rect width="180" height="42" rx="12" fill="#0E1726" stroke="#38BDF8" stroke-width="1.5" />
+      <circle cx="22" cy="21" r="7" fill="#38BDF8" />
+      <text x="38" y="26" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">Python &amp; PyQt6</text>
+    </g>
+
+    <!-- Badge 3 -->
+    <g class="badge-float-3" transform="translate(390, 0)">
+      <rect width="180" height="42" rx="12" fill="#0E1726" stroke="#818CF8" stroke-width="1.5" />
+      <circle cx="22" cy="21" r="7" fill="#818CF8" />
+      <text x="38" y="26" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">TypeScript &amp; Web</text>
+    </g>
+
+    <!-- Badge 4 -->
+    <g class="badge-float-4" transform="translate(585, 0)">
+      <rect width="220" height="42" rx="12" fill="#0E1726" stroke="#A855F7" stroke-width="1.5" />
+      <circle cx="22" cy="21" r="7" fill="#A855F7" />
+      <text x="38" y="26" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">🤖 AI-Augmented Workflow</text>
+    </g>
+
+    <!-- Badge 5 -->
+    <g class="badge-float-1" transform="translate(820, 0)">
+      <rect width="190" height="42" rx="12" fill="#0E1726" stroke="#FF2A55" stroke-width="1.5" />
+      <circle cx="22" cy="21" r="7" fill="#FF2A55" />
+      <text x="38" y="26" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">🎬 YPDlp Media Suite</text>
+    </g>
+  </g>
+
+  <!-- Corner Glowing Tech Angles -->
+  <path d="M 1150 350 L 1180 350 A 15 15 0 0 0 1195 335 L 1195 305" fill="none" stroke="#00E5FF" stroke-width="3.5" />
+  <path d="M 50 30 L 20 30 A 15 15 0 0 0 5 45 L 5 75" fill="none" stroke="#FF2A55" stroke-width="3.5" />
+</svg>

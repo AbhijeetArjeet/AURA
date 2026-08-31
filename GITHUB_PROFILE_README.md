@@ -1,20 +1,13 @@
 <div align="center">
 
-  <!-- Native SVG Hero Banner -->
+  <!-- 60FPS Native Dynamic Animated Hero Header -->
   <a href="https://github.com/AbhijeetArjeet">
-    <img src="https://raw.githubusercontent.com/AbhijeetArjeet/AbhijeetArjeet/main/assets/banner.svg" width="100%" alt="Abhijeet Arjeet Banner" />
+    <img src="https://raw.githubusercontent.com/AbhijeetArjeet/AbhijeetArjeet/main/assets/dynamic_header.svg" width="100%" alt="Abhijeet Arjeet - Dynamic Header" />
   </a>
 
   <br /><br />
 
-  <!-- Animated Typing SVG with Cyan & Purple Neon Accents -->
-  <a href="https://github.com/AbhijeetArjeet">
-    <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=24&duration=2800&pause=1000&color=38BDF8&center=true&vCenter=true&width=680&height=60&lines=👋+Hello%2C+World!+I'm+Abhijeet+Arjeet;🤖+Pioneering+AI-Augmented+Software+Engineering;🎬+Creator+of+YPDlp+%E2%80%94+Standalone+Mobile+%26+Desktop+Suite;⚡+Crafting+High-Performance%2C+Privacy-First+Apps" alt="Typing Banner" />
-  </a>
-
-  <br />
-
-  <!-- Dynamic Profile Badges -->
+  <!-- Dynamic Live Badges -->
   <p align="center">
     <a href="https://github.com/AbhijeetArjeet">
       <img src="https://img.shields.io/badge/🤖_AI--Augmented-Engineer-7C3AED?style=for-the-badge&logo=google&logoColor=white" alt="AI Engineer" />
@@ -34,7 +27,7 @@
 
 ---
 
-### 💫 About Me & AI Workflow
+### 💫 About Me & AI Architecture
 
 ```yaml
 developer:
