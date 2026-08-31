@@ -1,115 +1,89 @@
-# YPDlp — YouTube Downloader
+# 🎬 YPDlp — High-Performance YouTube Downloader & Media Suite
 
-[![Website](https://img.shields.io/badge/🌐_Live_Website-Visit_Now-ff0000?style=for-the-badge)](https://yt-downloader-ccm6.onrender.com)
 [![GitHub Release](https://img.shields.io/badge/📦_Latest_Release-v1.0.11-success?style=for-the-badge&logo=github)](https://github.com/AbhijeetArjeet/yt_downloader/releases/tag/v1.0.11)
-[![GitHub](https://img.shields.io/badge/GitHub-AbhijeetArjeet-181717?style=for-the-badge&logo=github)](https://github.com/AbhijeetArjeet/yt_downloader)
+[![Android](https://img.shields.io/badge/Android-APK_v1.0.11-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.11/YPDlp_Android_v1.0.11.apk)
+[![Windows](https://img.shields.io/badge/Windows-Desktop_x64-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.11/YPDlp_Windows_x64.zip)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-A full-featured YouTube downloader available as a **PC desktop app**, **Android app**, and **Website**.
-
-### 🔗 Quick Links & Downloads
-
-| Platform | Link / Direct Download |
-|----------|------------------------|
-| 📱 **Android App (APK)** | [**Download YPDlp_Android_v1.0.11.apk**](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.11/YPDlp_Android_v1.0.11.apk) |
-| 🖥️ **Windows Desktop (x64)** | [**Download YPDlp_Windows_x64.zip**](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.11/YPDlp_Windows_x64.zip) |
-| 🌐 **Website** | [**yt-downloader-ccm6.onrender.com**](https://yt-downloader-ccm6.onrender.com) |
-| 📦 **All Releases** | [**GitHub Releases Page**](https://github.com/AbhijeetArjeet/yt_downloader/releases) |
+**YPDlp** is a 100% standalone, zero-telemetry, on-device YouTube downloader and offline media suite engineered for **Windows Desktop** and **Android**. It merges high-bitrate video/audio streams on-device without relying on external servers.
 
 ---
 
-## 📂 Project Structure
+## ⚡ Direct Downloads & Releases
 
-```
-yt_downloader/
-├── desktop/      ← Windows PC app (PyQt6, builds to .exe)
-├── android/      ← Android app (Kotlin, builds to .apk)
-├── website/      ← Web app + Flask backend (deployed on Render.com)
-└── README.md
-```
+| Platform | Format | Package Link |
+|:---|:---|:---|
+| 📱 **Android** | APK (Universal) | [📥 **Download YPDlp_Android_v1.0.11.apk**](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.11/YPDlp_Android_v1.0.11.apk) |
+| 🖥️ **Windows (x64)** | Portable ZIP | [📥 **Download YPDlp_Windows_x64.zip**](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.11/YPDlp_Windows_x64.zip) |
+| 📦 **All Releases** | Changelogs & Assets | [📂 **GitHub Releases Page**](https://github.com/AbhijeetArjeet/yt_downloader/releases) |
 
 ---
 
-## 🖥️ Part 1: Desktop App (Windows EXE)
+## 📱 Android App Features (Liquid Crystal Edition)
 
-A native Windows desktop application built with **PyQt6** and **yt-dlp**.
+- 💎 **Liquid Crystal Glass UI:** iOS-inspired translucent frosted glass, glowing neon accents, and smooth physics.
+- ⚡ **100% On-Device Standalone Engine:** Powered by embedded **Python 3.11** (`io.github.junkfood02.youtubedl-android:0.18.1`) + **FFmpeg**.
+- 🧩 **QuickJS JavaScript Engine (`libqjs.so`):** Native challenge solver to bypass YouTube's throttling & player signature changes.
+- 🎬 **True High-Res Extraction:** Download **4K (2160p)**, **2K (1440p)**, **1080p**, **720p**, and audio formats (**MP3, M4A, FLAC, OPUS, WAV**).
+- 📁 **Full Playlist Batch Downloader:** 1-tap automated playlist extraction and batch downloading.
+- 🎵 **Integrated Background Media Player:** Floating mini-player, lock-screen controls, and system notification playback.
+- 📂 **In-App Media Library:** Browse, watch, share, and manage downloaded video & audio directly.
+- 🛠️ **8MAN Easter Egg & Dev Terminal:** Tap Yukino to activate *Hachiman Mode* — an interactive terminal shell with diagnostic tools, cache clearing, latency testing, and live engine updating.
 
-### Features
-- 🎬 Download videos in MP4, MKV, WebM, AVI
-- 🎵 Download audio in MP3, M4A, FLAC, WAV, OGG, Opus
-- 📺 Quality selection: 4K, 1440p, 1080p, 720p, 480p, 360p
-- 📊 Download queue with configurable concurrency limit
-- ⚙️ Zero configuration needed — FFmpeg is built-in & auto-managed
+---
 
-### Run from Source
+## 🖥️ Windows Desktop App Features
+
+- ⚡ **Zero-Dependency Portable Binary:** Built with PyQt6 and PyInstaller.
+- 🛠️ **Bundled Static FFmpeg:** Automatically integrates FFmpeg for seamless multi-stream merging into pristine MP4/MKV.
+- 📊 **Concurrent Queue Manager:** Download multiple videos simultaneously with configurable concurrency limits and custom save destinations.
+- 🎵 **Lossless Audio Extraction:** Extract direct 320kbps MP3s, FLAC, and AAC audio streams.
+
+---
+
+## 🗺️ Future Roadmap & Optimization Plans
+
+Here is what is coming next in future releases of YPDlp:
+
+### 🎯 Phase 1: In-App Player & Playback Optimization
+- [ ] **Hardware-Accelerated Video Player:** Integrate VLC / ExoPlayer with gesture controls (brightness, volume swipe, double-tap seek).
+- [ ] **Picture-in-Picture (PiP) Mode:** Floating overlay player for Android and Windows picture-in-picture mode.
+- [ ] **Background Audio Queue & Playlist Playback:** Gapless audio playback with custom playlists and shuffle/repeat modes.
+- [ ] **Equalizer & Audio Enhancer:** 10-band equalizer with bass boost and vocal clarity presets.
+
+### 🎯 Phase 2: Engine & Network Performance
+- [ ] **Multi-Segment Turbo Downloader (Aria2c integration):** Split video downloads into multiple parallel HTTP connections for up to 5x faster speeds.
+- [ ] **Smart Chunk Streaming:** Stream while downloading — start playing video before the entire file finishes.
+- [ ] **Subtitle & Closed Captions Downloader:** Automatic subtitle embedding (SRT/VTT) in multiple languages.
+- [ ] **Thumbnail & Metadata Tagging:** Automatic ID3 tagging (Cover art, Artist, Album, Year) for music tracks.
+
+### 🎯 Phase 3: Platform Expansion & Ecosystem
+- [ ] **Browser Integration & Share Sheet:** Quick "Share to YPDlp" intent from the YouTube app / browsers on mobile and PC.
+- [ ] **Channel Subscriptions & RSS Downloader:** Subscribe to your favorite creators to auto-download new uploads.
+- [ ] **Android Auto & CarPlay Support:** Seamless offline music listening on the road.
+- [ ] **macOS & Linux Builds:** Native cross-platform desktop builds.
+
+---
+
+## 🛠️ Build from Source
+
+### Android
+```bash
+cd android
+./gradlew assembleDebug
+# Output APK: android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+### Windows Desktop
 ```bash
 cd desktop
 install.bat
-run.bat
-```
-
-### Build Standalone Release (Zero Dependencies)
-```bash
-cd desktop
 build.bat
-# Outputs:
-#   Folder: desktop/dist/YPDlp/YPDlp.exe
-#   Zip:    desktop/dist/YPDlp_Windows_x64.zip
+# Output ZIP: desktop/dist/YPDlp_Windows_x64.zip
 ```
 
 ---
-
-## 📱 Part 2: Android App (Liquid Crystal Edition)
-
-A modern Android app built with **Kotlin**, **Jetpack Compose**, and **Liquid Crystal glassmorphism aesthetics**.
-
-### Features
-- 💎 **Liquid Crystal Glass UI** — iOS-inspired translucent frosted glass, glowing neon accents, and fluid animations
-- 📁 **YouTube Playlist Downloader** — Automatically extracts playlists and downloads all videos with 1 tap
-- 🎬 **High-Quality Downloads (1080p, 720p, 4K & MP3)** — Streams merged media directly into your phone's `Download/YPDlp` folder
-- 📂 **In-App Downloaded Library** — Browse, play, share, and delete downloaded videos and audio
-- 🎵 **Background Audio/Video Playback** — Floating mini-player and notification controls to listen in background
-- 📲 **Universal Device Installation** — Installs cleanly on any Android phone without test-only restrictions
-
-### Build APK
-1. Double-click `android/build_apk.bat` or run:
-   ```bash
-   cd android
-   ./gradlew assembleDebug
-   ```
-2. The installable APK is located at: `android/app/build/outputs/apk/debug/app-debug.apk`
-
----
-
-## 🌐 Part 3: Website
-
-🔗 **Live at: [yt-downloader-ccm6.onrender.com](https://yt-downloader-ccm6.onrender.com)**
-
-A web-based downloader with a Flask API backend and a beautiful frontend UI.
-
-### Run Locally
-```bash
-cd website
-pip install -r requirements.txt
-python server.py
-# Open http://127.0.0.1:5000
-```
-
----
-
-## 📦 Tech Stack
-
-| Part | Technology |
-|------|-----------|
-| Desktop | Python, PyQt6, yt-dlp, PyInstaller |
-| Android | Kotlin, Jetpack Compose, yt-dlp |
-| Website | Python, Flask, yt-dlp, HTML/CSS/JS |
-
----
-
-## ⭐ Star this repo!
-
-If you found this useful, please give it a ⭐ on GitHub!
 
 ## ⚠️ Disclaimer
 
-This tool is for **personal and educational use only**. Downloading copyrighted content without permission may violate YouTube's Terms of Service and local laws. Use responsibly.
+This project is intended for **personal, offline, and educational use only**. Respect content creators and applicable copyright laws.
