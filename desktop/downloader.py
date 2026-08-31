@@ -203,8 +203,31 @@ class DownloadWorker(QThread):
         return opts
 
     # ── main run ─────────────────────────────
+    def _ensure_ffmpeg(self) -> str:
+        """Ensure FFmpeg is available.
+        If not found, attempt to download it using ffmpeg_utils.download_ffmpeg_if_missing.
+        Returns the path to ffmpeg.exe or raises RuntimeError.
+        """
+        # First, try existing location or detection
+        ffmpeg_path = ffmpeg_utils.get_ffmpeg_path(self.ffmpeg_location)
+        if ffmpeg_path and os.path.isfile(ffmpeg_path):
+            return ffmpeg_path
+        # Not found – attempt auto-download (only on Windows)
+        self.status.emit("Downloading FFmpeg binary (required for high‑resolution muxing)…")
+        downloaded = ffmpeg_utils.download_ffmpeg_if_missing(
+            progress_callback=lambda pct, msg: self.status.emit(msg)
+        )
+        if downloaded and os.path.isfile(downloaded):
+            # Update location for future use
+            self.ffmpeg_location = downloaded
+            self.status.emit("FFmpeg ready.")
+            return downloaded
+        raise RuntimeError("FFmpeg not found and auto‑download failed. Install FFmpeg or set ffmpeg_location.")
+
     def run(self):
         try:
+            # Ensure ffmpeg is present before building options
+            self.ffmpeg_location = self._ensure_ffmpeg()
             opts = self._build_opts()
             self.status.emit("Starting download…")
             with yt_dlp.YoutubeDL(opts) as ydl:
@@ -213,6 +236,8 @@ class DownloadWorker(QThread):
                 self.finished.emit(False, "Cancelled.")
             else:
                 self.finished.emit(True, "Download complete!")
+        except RuntimeError as re:
+            self.finished.emit(False, str(re))
         except yt_dlp.utils.DownloadCancelled:
             self.finished.emit(False, "Cancelled.")
         except Exception as e:
