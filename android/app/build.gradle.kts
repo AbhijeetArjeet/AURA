@@ -13,8 +13,8 @@ android {
         applicationId = "com.aura.music"
         minSdk = 26
         targetSdk = 35
-        versionCode = 8
-        versionName = "1.1.7"
+        versionCode = 9
+        versionName = "1.1.8"
 
         ndk {
             abiFilters.addAll(setOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64"))

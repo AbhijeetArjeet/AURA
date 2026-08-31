@@ -35,7 +35,8 @@ fun AuraHomeScreen(
     vm: MainViewModel,
     onOpenAutoMix: () -> Unit,
     onOpenNowPlaying: () -> Unit,
-    onOpenWebPlayer: () -> Unit = {}
+    onOpenWebPlayer: () -> Unit = {},
+    onOpenRhythmGame: () -> Unit = {}
 ) {
     val greeting = remember {
         val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
@@ -233,7 +234,7 @@ fun AuraHomeScreen(
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(68.dp)
+                        .height(64.dp)
                         .clip(RoundedCornerShape(18.dp))
                         .clickable { onOpenWebPlayer() },
                     shape = RoundedCornerShape(18.dp),
@@ -248,7 +249,7 @@ fun AuraHomeScreen(
                                 )
                             )
                             .border(1.dp, Color(0xFF00E5FF).copy(alpha = 0.35f), RoundedCornerShape(18.dp))
-                            .padding(horizontal = 16.dp, vertical = 10.dp)
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxSize(),
@@ -258,17 +259,64 @@ fun AuraHomeScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(
                                     modifier = Modifier
-                                        .size(40.dp)
+                                        .size(38.dp)
                                         .clip(CircleShape)
                                         .background(Color(0xFFFF0033).copy(alpha = 0.2f)),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Icon(Icons.Filled.Language, contentDescription = null, tint = Color(0xFFFF2A55), modifier = Modifier.size(24.dp))
+                                    Icon(Icons.Filled.Language, contentDescription = null, tint = Color(0xFFFF2A55), modifier = Modifier.size(22.dp))
                                 }
                                 Spacer(Modifier.width(12.dp))
                                 Column {
-                                    Text("Web Music Streamer", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color.White)
+                                    Text("Web Music Streamer", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color.White)
                                     Text("YT Music Premium • Spotify • Ad-Free", fontSize = 11.sp, color = Color(0xFF00E5FF))
+                                }
+                            }
+                            Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = Color.White.copy(alpha = 0.6f))
+                        }
+                    }
+                }
+
+                // 🎮 Music Tiles 3 & OSU Rhythm Game Card
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(64.dp)
+                        .clip(RoundedCornerShape(18.dp))
+                        .clickable { onOpenRhythmGame() },
+                    shape = RoundedCornerShape(18.dp),
+                    color = Color.Transparent
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(Color(0xFF2E0854), Color(0xFF16082F))
+                                )
+                            )
+                            .border(1.dp, Color(0xFFFF2A55).copy(alpha = 0.4f), RoundedCornerShape(18.dp))
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(38.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFFFF2A55).copy(alpha = 0.25f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Filled.SportsEsports, contentDescription = null, tint = Color(0xFFFF2A55), modifier = Modifier.size(22.dp))
+                                }
+                                Spacer(Modifier.width(12.dp))
+                                Column {
+                                    Text("🎮 Magic Piano Tiles & OSU", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color.White)
+                                    Text("Play with your downloaded tracks", fontSize = 11.sp, color = Color(0xFFFF6B2B))
                                 }
                             }
                             Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = Color.White.copy(alpha = 0.6f))

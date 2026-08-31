@@ -127,6 +127,7 @@ fun YPDlpApp(
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showNowPlayingScreen by remember { mutableStateOf(false) }
     var showWebPlayer by remember { mutableStateOf(false) }
+    var showRhythmGame by remember { mutableStateOf(false) }
     var activeVideoFile by remember { mutableStateOf<DownloadedFile?>(null) }
 
     var logoTapCount by remember { mutableIntStateOf(0) }
@@ -258,7 +259,8 @@ fun YPDlpApp(
                             vm = vm,
                             onOpenAutoMix = { selectedTab = 1 },
                             onOpenNowPlaying = { showNowPlayingScreen = true },
-                            onOpenWebPlayer = { showWebPlayer = true }
+                            onOpenWebPlayer = { showWebPlayer = true },
+                            onOpenRhythmGame = { showRhythmGame = true }
                         )
                         1 -> com.ypdlp.downloader.aura.AuraAutoMixScreen(
                             session = ui.autoMixSession,
@@ -310,6 +312,24 @@ fun YPDlpApp(
                 com.ypdlp.downloader.aura.AuraWebPlayerScreen(
                     vm = vm,
                     onClose = { showWebPlayer = false }
+                )
+            }
+        }
+
+        // Fullscreen Magic Piano Tiles & OSU Rhythm Game
+        if (showRhythmGame) {
+            androidx.compose.ui.window.Dialog(
+                onDismissRequest = { showRhythmGame = false },
+                properties = androidx.compose.ui.window.DialogProperties(
+                    usePlatformDefaultWidth = false,
+                    decorFitsSystemWindows = false
+                )
+            ) {
+                com.ypdlp.downloader.aura.AuraRhythmTilesGame(
+                    playerState = playerState,
+                    files = ui.downloadedFiles,
+                    vm = vm,
+                    onClose = { showRhythmGame = false }
                 )
             }
         }
