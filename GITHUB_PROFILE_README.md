@@ -1,7 +1,11 @@
 <div align="center">
 
-  <!-- Dynamic Waving Capsule Header -->
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&custom_color_list=0:090A0F,25:1E1B4B,50:312E81,75:0284C7,100:06B6D4&height=230&section=header&text=Abhijeet%20Arjeet&fontSize=48&fontAlignY=36&desc=%E2%9A%A1%20AI-Augmented%20Software%20Engineer%20%E2%80%A2%20On-Device%20%26%20Systems%20Builder&descAlignY=58&descAlign=50&fontColor=ffffff&descColor=94A3B8&animation=fadeIn" width="100%" alt="Header Banner" />
+  <!-- Native SVG Hero Banner -->
+  <a href="https://github.com/AbhijeetArjeet">
+    <img src="https://raw.githubusercontent.com/AbhijeetArjeet/AbhijeetArjeet/main/assets/banner.svg" width="100%" alt="Abhijeet Arjeet Banner" />
+  </a>
+
+  <br /><br />
 
   <!-- Animated Typing SVG with Cyan & Purple Neon Accents -->
   <a href="https://github.com/AbhijeetArjeet">
@@ -276,10 +280,5 @@ capabilities:
   <br /><br />
 
   <sub><em>"Simplicity is the prerequisite for reliability."</em> — <b>Hachiman / Yukino Mode Activated ❄️</b></sub>
-
-  <br /><br />
-
-  <!-- Footer Waving Capsule -->
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&custom_color_list=0:06B6D4,25:0284C7,50:312E81,75:1E1B4B,100:090A0F&height=120&section=footer" width="100%" alt="Footer Wave" />
 
 </div>
