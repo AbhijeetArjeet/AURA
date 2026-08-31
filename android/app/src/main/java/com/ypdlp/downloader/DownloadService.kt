@@ -137,6 +137,8 @@ class DownloadService : Service() {
                 addOption("--newline")
                 addOption("--no-mtime")
                 addOption("--no-check-certificates")
+                addOption("--ignore-errors")
+                addOption("--no-warnings")
 
                 if (isAudio) {
                     addOption("-f", "bestaudio/best")

@@ -126,31 +126,59 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                // If on-device standalone engine is ready and no custom server is specified:
                 val isReady = YPDlpApp.ensureInitialized(getApplication())
                 if (isReady && _ui.value.serverUrl.isBlank()) {
+                    val isPlaylistUrl = url.contains("list=") || url.contains("/playlist")
                     val req = YoutubeDLRequest(url).apply {
                         addOption("--no-check-certificates")
+                        addOption("--ignore-errors")
+                        addOption("--no-warnings")
                     }
                     val ytdlInfo = YoutubeDL.getInstance().getInfo(req)
 
-                    val durationSecs = (ytdlInfo.duration?.toLong()) ?: 0L
-                    val viewCountLong = (ytdlInfo.viewCount?.toLong()) ?: 0L
-                    val videoInfo = VideoInfo(
-                        url = ytdlInfo.webpageUrl ?: url,
-                        title = ytdlInfo.title ?: "Unknown Title",
-                        channel = ytdlInfo.uploader ?: "",
-                        durationSeconds = durationSecs,
-                        thumbnailUrl = ytdlInfo.thumbnail ?: "",
-                        viewCount = viewCountLong
-                    )
-
-                    _ui.update {
-                        it.copy(
-                            videoInfo = videoInfo,
-                            isPlaylistMode = false,
-                            isLoadingInfo = false
+                    if (isPlaylistUrl) {
+                        val videoInfo = VideoInfo(
+                            url = ytdlInfo.webpageUrl ?: url,
+                            title = ytdlInfo.title ?: "YouTube Playlist",
+                            channel = ytdlInfo.uploader ?: "",
+                            durationSeconds = (ytdlInfo.duration?.toLong()) ?: 0L,
+                            thumbnailUrl = ytdlInfo.thumbnail ?: "",
+                            viewCount = (ytdlInfo.viewCount?.toLong()) ?: 0L
                         )
+                        val playlist = PlaylistInfo(
+                            title = ytdlInfo.title ?: "YouTube Playlist",
+                            author = ytdlInfo.uploader ?: "",
+                            itemCount = 1,
+                            items = listOf(videoInfo),
+                            url = url
+                        )
+
+                        _ui.update {
+                            it.copy(
+                                playlistInfo = playlist,
+                                isPlaylistMode = true,
+                                isLoadingInfo = false
+                            )
+                        }
+                    } else {
+                        val durationSecs = (ytdlInfo.duration?.toLong()) ?: 0L
+                        val viewCountLong = (ytdlInfo.viewCount?.toLong()) ?: 0L
+                        val videoInfo = VideoInfo(
+                            url = ytdlInfo.webpageUrl ?: url,
+                            title = ytdlInfo.title ?: "Unknown Title",
+                            channel = ytdlInfo.uploader ?: "",
+                            durationSeconds = durationSecs,
+                            thumbnailUrl = ytdlInfo.thumbnail ?: "",
+                            viewCount = viewCountLong
+                        )
+
+                        _ui.update {
+                            it.copy(
+                                videoInfo = videoInfo,
+                                isPlaylistMode = false,
+                                isLoadingInfo = false
+                            )
+                        }
                     }
                 } else {
                     // Use backend server (local PC or remote)
