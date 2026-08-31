@@ -78,11 +78,6 @@ def fetch_info(url: str) -> dict:
         "skip_download": True,
         "noplaylist": True,
         "extract_flat": False,
-        "extractor_args": {
-            "youtube": {
-                "player_client": ["web", "mweb", "android", "ios"]
-            }
-        },
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
@@ -169,11 +164,6 @@ class DownloadWorker(QThread):
             "quiet":           True,
             "no_warnings":     True,
             "noplaylist":      True,
-            "extractor_args": {
-                "youtube": {
-                    "player_client": ["web", "mweb", "android", "ios"]
-                }
-            },
         }
 
         # Normalize quality key – accept variations like "1080p MP4" or "1080p" etc.

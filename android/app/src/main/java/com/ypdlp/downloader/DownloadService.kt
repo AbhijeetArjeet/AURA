@@ -124,12 +124,12 @@ class DownloadService : Service() {
             val isAudio = req.container.uppercase() in listOf("MP3", "M4A", "FLAC", "WAV", "OGG", "OPUS")
             val qualityMap = mapOf(
                 "Best"       to "bestvideo+bestaudio/best",
-                "4K (2160p)" to "bestvideo[height<=2160]+bestaudio/best[height<=2160]/bestvideo+bestaudio/best",
-                "2K (1440p)" to "bestvideo[height<=1440]+bestaudio/best[height<=1440]/bestvideo+bestaudio/best",
-                "1080p"      to "bestvideo[height<=1080]+bestaudio/best[height<=1080]/bestvideo+bestaudio/best",
-                "720p"       to "22/bestvideo[height<=720]+bestaudio/best[height<=720]/best",
+                "4K (2160p)" to "bestvideo[height<=2160]+bestaudio/best[height<=2160]/best",
+                "2K (1440p)" to "bestvideo[height<=1440]+bestaudio/best[height<=1440]/best",
+                "1080p"      to "bestvideo[height<=1080]+bestaudio/best[height<=1080]/best",
+                "720p"       to "bestvideo[height<=720]+bestaudio/best[height<=720]/best",
                 "480p"       to "bestvideo[height<=480]+bestaudio/best[height<=480]/best",
-                "360p"       to "18/best[height<=360]/bestvideo[height<=360]+bestaudio/best",
+                "360p"       to "bestvideo[height<=360]+bestaudio/best[height<=360]/best",
             )
 
             val ytdlRequest = YoutubeDLRequest(req.url).apply {
@@ -137,9 +137,6 @@ class DownloadService : Service() {
                 addOption("--newline")
                 addOption("--no-mtime")
                 addOption("--no-check-certificates")
-                addOption("--prefer-free-formats")
-                addOption("--extractor-args", "youtube:player_client=android,ios")
-                addOption("--add-header", "User-Agent:com.google.android.youtube/19.09.37 (Linux; U; Android 14) gzip")
 
                 if (isAudio) {
                     addOption("-f", "bestaudio/best")
@@ -147,7 +144,7 @@ class DownloadService : Service() {
                     addOption("--audio-format", req.container.lowercase())
                     addOption("--audio-quality", "0")
                 } else {
-                    val fmt = qualityMap[req.quality] ?: "bestvideo+bestaudio/best"
+                    val fmt = qualityMap[req.quality] ?: "bestvideo[height<=1080]+bestaudio/best[height<=1080]/best"
                     addOption("-f", fmt)
                     addOption("--merge-output-format", req.container.lowercase())
                 }
