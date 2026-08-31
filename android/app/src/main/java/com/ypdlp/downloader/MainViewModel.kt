@@ -349,8 +349,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                     raw.equals("clear", ignoreCase = true) || raw.equals("cls", ignoreCase = true) -> {
                         AppLogger.clear()
                     }
+                    raw.equals("update", ignoreCase = true) || raw.equals("upgrade", ignoreCase = true) || raw.equals("yt-dlp -u", ignoreCase = true) -> {
+                        updateEngine()
+                    }
                     raw.equals("help", ignoreCase = true) -> {
                         AppLogger.i("Help", "=== 8MAN Console Shell Commands ===")
+                        AppLogger.i("Help", "  update           - Update yt-dlp binary to latest YouTube fixes")
                         AppLogger.i("Help", "  info <url>       - Query stream metadata on-device")
                         AppLogger.i("Help", "  diag             - Print full system & storage diagnostic")
                         AppLogger.i("Help", "  ping             - Test YouTube CDN latency & DNS")
@@ -416,6 +420,18 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    fun updateEngine() {
+        viewModelScope.launch(Dispatchers.IO) {
+            AppLogger.i("Engine", "🔄 Updating yt-dlp binary to latest YouTube fixes...")
+            try {
+                val status = YoutubeDL.getInstance().updateYoutubeDL(getApplication())
+                AppLogger.i("Engine", "✔ yt-dlp binary updated: $status")
+            } catch (ue: Throwable) {
+                AppLogger.e("Engine", "✘ yt-dlp update failed: ${ue.message}")
+            }
+        }
+    }
+
     fun forceReinitEngine() {
         viewModelScope.launch(Dispatchers.IO) {
             AppLogger.i("Engine", "🔄 Forcing manual re-initialization of YoutubeDL & FFmpeg...")
@@ -425,6 +441,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                     com.yausername.ffmpeg.FFmpeg.getInstance().init(getApplication())
                 } catch (e: Exception) {}
                 AppLogger.i("Engine", "✔ On-device engine re-initialized successfully!")
+                updateEngine()
             } catch (e: Exception) {
                 AppLogger.e("Engine", "✘ Re-init error: ${e.message}")
             }

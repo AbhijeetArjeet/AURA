@@ -1611,13 +1611,12 @@ fun HachimanConsoleTab(ui: UiState, vm: MainViewModel) {
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         ActionChipGlass(
-                            icon = Icons.Filled.ContentCopy,
-                            label = "Copy Full Log",
+                            icon = Icons.Filled.SystemUpdate,
+                            label = "Update yt-dlp",
                             modifier = Modifier.weight(1f),
                             onClick = {
-                                val report = vm.getDiagnosticReport()
-                                clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(report))
-                                Toast.makeText(context, "Full diagnostic report copied to clipboard!", Toast.LENGTH_SHORT).show()
+                                vm.updateEngine()
+                                Toast.makeText(context, "Updating yt-dlp binary...", Toast.LENGTH_SHORT).show()
                             }
                         )
                         ActionChipGlass(
@@ -1635,20 +1634,22 @@ fun HachimanConsoleTab(ui: UiState, vm: MainViewModel) {
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         ActionChipGlass(
+                            icon = Icons.Filled.ContentCopy,
+                            label = "Copy Log",
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                val report = vm.getDiagnosticReport()
+                                clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(report))
+                                Toast.makeText(context, "Full diagnostic report copied to clipboard!", Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                        ActionChipGlass(
                             icon = Icons.Filled.CleaningServices,
                             label = "Purge Cache",
                             modifier = Modifier.weight(1f),
                             onClick = {
                                 vm.clearTempCache()
                                 Toast.makeText(context, "Cache purged!", Toast.LENGTH_SHORT).show()
-                            }
-                        )
-                        ActionChipGlass(
-                            icon = Icons.Filled.NetworkCheck,
-                            label = "Ping YouTube",
-                            modifier = Modifier.weight(1f),
-                            onClick = {
-                                vm.pingYouTube()
                             }
                         )
                         ActionChipGlass(

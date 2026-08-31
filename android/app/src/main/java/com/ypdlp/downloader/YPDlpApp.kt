@@ -28,6 +28,18 @@ class YPDlpApp : Application() {
                 isStandaloneEngineReady = true
                 Log.d("YPDlpApp", "YoutubeDL engine initialized successfully.")
                 AppLogger.i("Engine", "✔ YoutubeDL engine initialized successfully.")
+
+                // Check and update yt-dlp binary to latest version asynchronously
+                Thread {
+                    try {
+                        val status = YoutubeDL.getInstance().updateYoutubeDL(app)
+                        Log.d("YPDlpApp", "yt-dlp auto-update: $status")
+                        AppLogger.i("Engine", "✔ yt-dlp binary status: $status")
+                    } catch (ue: Throwable) {
+                        Log.w("YPDlpApp", "yt-dlp auto-update note: ${ue.message}")
+                    }
+                }.start()
+
                 true
             } catch (e: Throwable) {
                 Log.e("YPDlpApp", "Failed to initialize YoutubeDL: ${e.message}", e)
