@@ -21,14 +21,17 @@ class YPDlpApp : Application() {
                 YoutubeDL.getInstance().init(app)
                 try {
                     FFmpeg.getInstance().init(app)
-                } catch (fe: Exception) {
+                } catch (fe: Throwable) {
                     Log.w("YPDlpApp", "FFmpeg init warning (non-fatal): ${fe.message}")
+                    AppLogger.w("Engine", "FFmpeg init warning (non-fatal): ${fe.message}")
                 }
                 isStandaloneEngineReady = true
                 Log.d("YPDlpApp", "YoutubeDL engine initialized successfully.")
+                AppLogger.i("Engine", "✔ YoutubeDL engine initialized successfully.")
                 true
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 Log.e("YPDlpApp", "Failed to initialize YoutubeDL: ${e.message}", e)
+                AppLogger.e("Engine", "Failed to initialize YoutubeDL: ${e.message} (${e.javaClass.simpleName})")
                 false
             }
         }

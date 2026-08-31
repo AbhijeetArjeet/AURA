@@ -13,8 +13,8 @@ android {
         applicationId = "com.ypdlp.downloader"
         minSdk = 26
         targetSdk = 35
-        versionCode = 6
-        versionName = "1.0.6"
+        versionCode = 7
+        versionName = "1.0.7"
 
         ndk {
             abiFilters.addAll(setOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64"))
@@ -53,6 +53,9 @@ android {
         buildConfig = true
     }
     packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
