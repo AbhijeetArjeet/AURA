@@ -126,6 +126,7 @@ fun YPDlpApp(
     var selectedTab by remember { mutableIntStateOf(0) }
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showNowPlayingScreen by remember { mutableStateOf(false) }
+    var showWebPlayer by remember { mutableStateOf(false) }
     var activeVideoFile by remember { mutableStateOf<DownloadedFile?>(null) }
 
     var logoTapCount by remember { mutableIntStateOf(0) }
@@ -256,7 +257,8 @@ fun YPDlpApp(
                             ui = ui,
                             vm = vm,
                             onOpenAutoMix = { selectedTab = 1 },
-                            onOpenNowPlaying = { showNowPlayingScreen = true }
+                            onOpenNowPlaying = { showNowPlayingScreen = true },
+                            onOpenWebPlayer = { showWebPlayer = true }
                         )
                         1 -> com.ypdlp.downloader.aura.AuraAutoMixScreen(
                             session = ui.autoMixSession,
@@ -292,6 +294,21 @@ fun YPDlpApp(
                     playerState = playerState,
                     vm = vm,
                     onClose = { showNowPlayingScreen = false }
+                )
+            }
+        }
+
+        // Fullscreen In-App Web Music Player (YT Music / Spotify / SoundCloud with AdBlock)
+        if (showWebPlayer) {
+            androidx.compose.ui.window.Dialog(
+                onDismissRequest = { showWebPlayer = false },
+                properties = androidx.compose.ui.window.DialogProperties(
+                    usePlatformDefaultWidth = false,
+                    decorFitsSystemWindows = false
+                )
+            ) {
+                com.ypdlp.downloader.aura.AuraWebPlayerScreen(
+                    onClose = { showWebPlayer = false }
                 )
             }
         }

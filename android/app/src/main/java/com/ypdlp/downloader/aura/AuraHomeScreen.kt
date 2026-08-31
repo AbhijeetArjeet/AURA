@@ -34,7 +34,8 @@ fun AuraHomeScreen(
     ui: UiState,
     vm: MainViewModel,
     onOpenAutoMix: () -> Unit,
-    onOpenNowPlaying: () -> Unit
+    onOpenNowPlaying: () -> Unit,
+    onOpenWebPlayer: () -> Unit = {}
 ) {
     val greeting = remember {
         val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
@@ -154,74 +155,123 @@ fun AuraHomeScreen(
             }
         }
 
-        // ── Quick Action Hero Cards (AutoMix & AI DJ) ────────────────────────
+        // ── Quick Action Hero Cards (AutoMix, AI DJ & Web Streamer) ──────────
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                // AutoMix DJ Card
-                Surface(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(115.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                        .clickable {
-                            vm.toggleAutoMix()
-                            onOpenAutoMix()
-                        },
-                    shape = RoundedCornerShape(20.dp),
-                    color = Color.Transparent
-                ) {
-                    Box(
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    // AutoMix DJ Card
+                    Surface(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                Brush.linearGradient(
-                                    listOf(Color(0xFFFF2A55), Color(0xFFFF6B2B))
-                                )
-                            )
-                            .padding(14.dp)
+                            .weight(1f)
+                            .height(110.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                            .clickable {
+                                vm.toggleAutoMix()
+                                onOpenAutoMix()
+                            },
+                        shape = RoundedCornerShape(20.dp),
+                        color = Color.Transparent
                     ) {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.SpaceBetween
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.linearGradient(
+                                        listOf(Color(0xFFFF2A55), Color(0xFFFF6B2B))
+                                    )
+                                )
+                                .padding(14.dp)
                         ) {
-                            Icon(Icons.Filled.Tune, contentDescription = null, tint = Color.White, modifier = Modifier.size(26.dp))
-                            Column {
-                                Text("🎧 AutoMix Room", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color.White)
-                                Text("DJ Transitions & BPM", fontSize = 11.sp, color = Color.White.copy(alpha = 0.8f))
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Icon(Icons.Filled.Tune, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
+                                Column {
+                                    Text("🎧 AutoMix Room", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color.White)
+                                    Text("DJ Transitions", fontSize = 10.sp, color = Color.White.copy(alpha = 0.8f))
+                                }
+                            }
+                        }
+                    }
+
+                    // AI DJ Session Card
+                    Surface(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(110.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                            .clickable { vm.startAiDjSession() },
+                        shape = RoundedCornerShape(20.dp),
+                        color = Color.Transparent
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.linearGradient(
+                                        listOf(Color(0xFF9D4EDD), Color(0xFF00E5FF))
+                                    )
+                                )
+                                .padding(14.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Icon(Icons.Filled.RecordVoiceOver, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
+                                Column {
+                                    Text("🎙️ AURA AI DJ", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color.White)
+                                    Text("Atmospheric Sets", fontSize = 10.sp, color = Color.White.copy(alpha = 0.8f))
+                                }
                             }
                         }
                     }
                 }
 
-                // AI DJ Session Card
+                // 🌐 In-App Web Music Player Card (YT Music / Spotify / SoundCloud with Ad-Block)
                 Surface(
                     modifier = Modifier
-                        .weight(1f)
-                        .height(115.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                        .clickable { vm.startAiDjSession() },
-                    shape = RoundedCornerShape(20.dp),
+                        .fillMaxWidth()
+                        .height(68.dp)
+                        .clip(RoundedCornerShape(18.dp))
+                        .clickable { onOpenWebPlayer() },
+                    shape = RoundedCornerShape(18.dp),
                     color = Color.Transparent
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(
-                                Brush.linearGradient(
-                                    listOf(Color(0xFF9D4EDD), Color(0xFF00E5FF))
+                                Brush.horizontalGradient(
+                                    listOf(Color(0xFF0F172A), Color(0xFF1E293B))
                                 )
                             )
-                            .padding(14.dp)
+                            .border(1.dp, Color(0xFF00E5FF).copy(alpha = 0.35f), RoundedCornerShape(18.dp))
+                            .padding(horizontal = 16.dp, vertical = 10.dp)
                     ) {
-                        Column(
+                        Row(
                             modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Filled.RecordVoiceOver, contentDescription = null, tint = Color.White, modifier = Modifier.size(26.dp))
-                            Column {
-                                Text("🎙️ AURA AI DJ", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color.White)
-                                Text("Atmospheric Sets", fontSize = 11.sp, color = Color.White.copy(alpha = 0.8f))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFFFF0033).copy(alpha = 0.2f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Filled.Language, contentDescription = null, tint = Color(0xFFFF2A55), modifier = Modifier.size(24.dp))
+                                }
+                                Spacer(Modifier.width(12.dp))
+                                Column {
+                                    Text("Web Music Streamer", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color.White)
+                                    Text("YT Music Premium • Spotify • Ad-Free", fontSize = 11.sp, color = Color(0xFF00E5FF))
+                                }
                             }
+                            Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = Color.White.copy(alpha = 0.6f))
                         }
                     }
                 }
