@@ -520,19 +520,52 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                     raw.equals("clear", ignoreCase = true) || raw.equals("cls", ignoreCase = true) -> {
                         AppLogger.clear()
                     }
-                    raw.equals("update", ignoreCase = true) || raw.equals("upgrade", ignoreCase = true) || raw.equals("yt-dlp -u", ignoreCase = true) -> {
-                        updateEngine()
-                    }
                     raw.equals("help", ignoreCase = true) -> {
-                        AppLogger.i("Help", "=== 8MAN Console Shell Commands ===")
-                        AppLogger.i("Help", "  update           - Update yt-dlp binary to latest YouTube fixes")
-                        AppLogger.i("Help", "  info <url>       - Query stream metadata on-device")
-                        AppLogger.i("Help", "  diag             - Print full system & storage diagnostic")
-                        AppLogger.i("Help", "  ping             - Test YouTube CDN latency & DNS")
-                        AppLogger.i("Help", "  reinit           - Force reload YoutubeDL & FFmpeg engine")
-                        AppLogger.i("Help", "  clearcache       - Clean temp, cache & part files")
-                        AppLogger.i("Help", "  clear / cls      - Clear console logs")
-                        AppLogger.i("Help", "  8man             - Print random cynical Hachiman quote")
+                        AppLogger.i("Terminal", "═══ 8MAN TERMINAL COMMANDS ═══")
+                        AppLogger.i("Terminal", "• scan                : Deep scan local audio and rebuild database")
+                        AppLogger.i("Terminal", "• update              : Update yt-dlp core engine to latest version")
+                        AppLogger.i("Terminal", "• clean / clearcache  : Wipe temporary cache & incomplete files")
+                        AppLogger.i("Terminal", "• diag                : Print full system & storage diagnostic")
+                        AppLogger.i("Terminal", "• ping                : Test YouTube CDN latency & DNS")
+                        AppLogger.i("Terminal", "• reinit              : Force reload YoutubeDL & FFmpeg engine")
+                        AppLogger.i("Terminal", "• dl <url>            : Direct download audio (highest quality 320k)")
+                        AppLogger.i("Terminal", "• playlist <url>      : Batch download entire YouTube playlist")
+                        AppLogger.i("Terminal", "• info <url>          : Inspect video metadata & formats")
+                        AppLogger.i("Terminal", "• stats               : View system and playback statistics")
+                        AppLogger.i("Terminal", "• 8man                : Philosophy of Hachiman Hikigaya")
+                    }
+                    raw.equals("scan", ignoreCase = true) -> {
+                        AppLogger.i("Scanner", "🔍 Initiating deep filesystem scan...")
+                        loadDownloadedFiles()
+                        AppLogger.i("Scanner", "✔ Scan finished! Discovered ${_ui.value.downloadedFiles.size} audio tracks.")
+                    }
+                    raw.equals("stats", ignoreCase = true) -> {
+                        AppLogger.i("Stats", "📊 Audio Tracks: ${_ui.value.downloadedFiles.size} | Favorites: ${_ui.value.favorites.size}")
+                        AppLogger.i("Stats", "📁 Custom Folders: ${_ui.value.customMusicFolders.size}")
+                    }
+                    raw.startsWith("dl ", ignoreCase = true) -> {
+                        val targetUrl = raw.removePrefix("dl ").trim()
+                        AppLogger.i("Download", "⚡ Starting direct audio download for: $targetUrl")
+                        val req = DownloadRequest(
+                            id = UUID.randomUUID().toString(),
+                            url = targetUrl,
+                            container = "MP3",
+                            quality = "Best",
+                            outputDir = DownloadService.getDownloadDirectory(getApplication()).absolutePath
+                        )
+                        downloadService?.enqueue(req, videoTitle = "Direct DL", thumbnailUrl = "")
+                    }
+                    raw.startsWith("playlist ", ignoreCase = true) -> {
+                        val targetUrl = raw.removePrefix("playlist ").trim()
+                        AppLogger.i("Playlist", "⚡ Queuing entire playlist: $targetUrl")
+                        val req = DownloadRequest(
+                            id = UUID.randomUUID().toString(),
+                            url = targetUrl,
+                            container = "MP3",
+                            quality = "Best",
+                            outputDir = DownloadService.getDownloadDirectory(getApplication()).absolutePath
+                        )
+                        downloadService?.enqueue(req, videoTitle = "Playlist Batch", thumbnailUrl = "")
                     }
                     raw.equals("diag", ignoreCase = true) -> {
                         val report = AppLogger.getDiagnosticReport(getApplication())
@@ -546,7 +579,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                     raw.equals("reinit", ignoreCase = true) -> {
                         forceReinitEngine()
                     }
-                    raw.equals("clearcache", ignoreCase = true) -> {
+                    raw.equals("update", ignoreCase = true) || raw.equals("upgrade", ignoreCase = true) || raw.equals("yt-dlp -u", ignoreCase = true) -> {
+                        updateEngine()
+                    }
+                    raw.equals("clean", ignoreCase = true) || raw.equals("prune", ignoreCase = true) || raw.equals("clearcache", ignoreCase = true) -> {
                         clearTempCache()
                     }
                     raw.equals("8man", ignoreCase = true) -> {
