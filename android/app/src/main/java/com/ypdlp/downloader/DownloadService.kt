@@ -137,7 +137,6 @@ class DownloadService : Service() {
                 addOption("--newline")
                 addOption("--no-mtime")
                 addOption("--no-check-certificates")
-                addOption("--extractor-args", "youtube:player_client=android,ios")
 
                 if (isAudio) {
                     addOption("-f", "bestaudio/best")
