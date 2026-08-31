@@ -131,14 +131,17 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 val isReady = YPDlpApp.ensureInitialized(getApplication())
                 if (isReady && _ui.value.serverUrl.isBlank()) {
                     val isPlaylistUrl = url.contains("list=") || url.contains("/playlist")
-                    val req = YoutubeDLRequest(url).apply {
-                        addOption("--no-check-certificates")
-                        addOption("--ignore-errors")
-                        addOption("--no-warnings")
-                    }
-                    val ytdlInfo = YoutubeDL.getInstance().getInfo(req)
-
+                    
                     if (isPlaylistUrl) {
+                        // Pass playlist URL directly to on-device single-item query with flat playlist
+                        val req = YoutubeDLRequest(url).apply {
+                            addOption("--no-check-certificates")
+                            addOption("--ignore-errors")
+                            addOption("--no-warnings")
+                            addOption("--flat-playlist")
+                        }
+                        val ytdlInfo = YoutubeDL.getInstance().getInfo(req)
+
                         val videoInfo = VideoInfo(
                             url = ytdlInfo.webpageUrl ?: url,
                             title = ytdlInfo.title ?: "YouTube Playlist",
@@ -147,6 +150,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                             thumbnailUrl = ytdlInfo.thumbnail ?: "",
                             viewCount = (ytdlInfo.viewCount?.toLong()) ?: 0L
                         )
+
                         val playlist = PlaylistInfo(
                             title = ytdlInfo.title ?: "YouTube Playlist",
                             author = ytdlInfo.uploader ?: "",
@@ -163,6 +167,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                             )
                         }
                     } else {
+                        val req = YoutubeDLRequest(url).apply {
+                            addOption("--no-check-certificates")
+                            addOption("--ignore-errors")
+                            addOption("--no-warnings")
+                        }
+                        val ytdlInfo = YoutubeDL.getInstance().getInfo(req)
+
                         val durationSecs = (ytdlInfo.duration?.toLong()) ?: 0L
                         val viewCountLong = (ytdlInfo.viewCount?.toLong()) ?: 0L
                         val videoInfo = VideoInfo(
@@ -267,16 +278,29 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         val playlistDir = File(baseDir, cleanPlaylistName)
         if (!playlistDir.exists()) playlistDir.mkdirs()
 
-        playlist.items.forEach { item ->
+        if (playlist.items.size == 1 && playlist.items[0].url == playlist.url) {
+            // Enqueue the whole playlist URL directly to yt-dlp to download all tracks automatically
             val req = DownloadRequest(
                 id = UUID.randomUUID().toString(),
-                url = item.url,
+                url = playlist.url,
                 container = _ui.value.selectedContainer,
                 quality = _ui.value.selectedQuality,
                 outputDir = playlistDir.absolutePath,
                 serverUrl = _ui.value.serverUrl
             )
-            downloadService?.enqueue(req, videoTitle = item.title, thumbnailUrl = item.thumbnailUrl)
+            downloadService?.enqueue(req, videoTitle = playlist.title, thumbnailUrl = playlist.items.firstOrNull()?.thumbnailUrl ?: "")
+        } else {
+            playlist.items.forEach { item ->
+                val req = DownloadRequest(
+                    id = UUID.randomUUID().toString(),
+                    url = item.url,
+                    container = _ui.value.selectedContainer,
+                    quality = _ui.value.selectedQuality,
+                    outputDir = playlistDir.absolutePath,
+                    serverUrl = _ui.value.serverUrl
+                )
+                downloadService?.enqueue(req, videoTitle = item.title, thumbnailUrl = item.thumbnailUrl)
+            }
         }
     }
 

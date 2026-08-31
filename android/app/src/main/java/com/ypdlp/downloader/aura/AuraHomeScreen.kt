@@ -275,10 +275,12 @@ fun AuraHomeScreen(
                     ) { uri ->
                         uri?.let {
                             try {
-                                val flags = android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                val flags = android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                                 context.contentResolver.takePersistableUriPermission(it, flags)
                             } catch (e: Exception) {
-                                // Ignore if not persistable
+                                try {
+                                    context.contentResolver.takePersistableUriPermission(it, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                } catch (e2: Exception) {}
                             }
                             vm.addCustomMusicFolder(it.toString())
                         }

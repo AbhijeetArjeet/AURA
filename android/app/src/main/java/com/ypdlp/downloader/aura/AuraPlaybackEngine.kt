@@ -69,19 +69,39 @@ class AuraPlaybackEngine(private val context: Context) {
                         .setUsage(AudioAttributes.USAGE_MEDIA)
                         .build()
                 )
-                val mediaUri = if (file.path.startsWith("content://")) {
-                    Uri.parse(file.path)
+                if (file.path.startsWith("content://")) {
+                    val uri = Uri.parse(file.path)
+                    try {
+                        val pfd = context.contentResolver.openFileDescriptor(uri, "r")
+                        if (pfd != null) {
+                            setDataSource(pfd.fileDescriptor)
+                            pfd.close()
+                        } else {
+                            setDataSource(context, uri)
+                        }
+                    } catch (e: Exception) {
+                        setDataSource(context, uri)
+                    }
                 } else {
-                    Uri.fromFile(file.file)
+                    setDataSource(file.file.absolutePath)
                 }
-                setDataSource(context, mediaUri)
                 prepare()
                 if (startPositionMs > 0 && startPositionMs < duration) {
                     seekTo(startPositionMs.toInt())
                 }
                 start()
 
-                initAudioEffects(audioSessionId)
+                try {
+                    initAudioEffects(audioSessionId)
+                } catch (efEx: Exception) {
+                    Log.w(TAG, "DSP effects skipped: ${efEx.message}")
+                }
+
+                setOnErrorListener { _, what, extra ->
+                    Log.e(TAG, "MediaPlayer error: what=$what extra=$extra")
+                    _isPlaying.value = false
+                    true
+                }
 
                 setOnCompletionListener {
                     _isPlaying.value = false
@@ -220,21 +240,22 @@ class AuraPlaybackEngine(private val context: Context) {
 
     private fun startVisualizerLoop() {
         visualizerJob?.cancel()
-        visualizerJob = scope.launch {
+        visualizerJob = scope.launch(Dispatchers.Default) {
             var phase = 0f
+            val reusableBands = FloatArray(32)
             while (isActive) {
                 if (_isPlaying.value) {
-                    phase += 0.15f
-                    val bands = FloatArray(32) { i ->
+                    phase += 0.12f
+                    for (i in 0 until 32) {
                         val base = (sin(phase + i * 0.4f) * 0.5f + 0.5f).toFloat()
-                        val noise = (Math.random() * 0.35f).toFloat()
-                        (base * 0.7f + noise).coerceIn(0.05f, 1.0f)
+                        val noise = (Math.random() * 0.25f).toFloat()
+                        reusableBands[i] = (base * 0.75f + noise).coerceIn(0.05f, 1.0f)
                     }
-                    _visualizerBands.value = bands
+                    _visualizerBands.value = reusableBands.copyOf()
                 } else {
                     _visualizerBands.value = FloatArray(32) { 0f }
                 }
-                delay(33L)
+                delay(60L) // 16-17fps is lightweight and butter-smooth for background ambience
             }
         }
     }
