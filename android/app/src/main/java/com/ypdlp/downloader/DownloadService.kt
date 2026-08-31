@@ -1,46 +1,52 @@
 package com.ypdlp.downloader
 
-import android.app.*
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.Service
+import android.content.Context
 import android.content.Intent
+import android.media.MediaScannerConnection
 import android.os.Binder
 import android.os.Build
+import android.os.Environment
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.util.UUID
+import kotlinx.coroutines.flow.update
+import java.io.File
 
-/**
- * Foreground service that runs yt-dlp via a bundled Python environment or
- * via an adb subprocess. On real devices, yt-dlp is invoked through the
- * embedded Python interpreter shipped with the APK via Chaquopy.
- *
- * ── For the initial release the service communicates with a local PC server
- *    (same Wi-Fi) that wraps yt-dlp. The UI lets the user set the server URL
- *    in Settings. This is the easiest portable architecture that mirrors the
- *    desktop app.
- */
 class DownloadService : Service() {
 
     companion object {
-        const val CHANNEL_ID   = "ypdlp_download"
-        const val NOTIF_ID     = 1001
+        const val CHANNEL_ID = "ypdlp_download"
+        const val NOTIF_ID = 1001
         const val ACTION_DOWNLOAD = "com.ypdlp.ACTION_DOWNLOAD"
-        const val EXTRA_REQUEST   = "download_request"
+        const val EXTRA_REQUEST = "download_request"
+
+        fun getDownloadDirectory(context: Context): File {
+            val publicDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            val appDir = File(publicDir, "YPDlp")
+            if (!appDir.exists()) {
+                appDir.mkdirs()
+            }
+            return if (appDir.exists() && appDir.canWrite()) appDir else File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "YPDlp").apply { mkdirs() }
+        }
     }
 
-    private val binder  = LocalBinder()
-    private val scope   = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val binder = LocalBinder()
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-    // Exposed to ViewModel via binding
-    private val _items  = MutableStateFlow<List<DownloadItem>>(emptyList())
-    val items           = _items.asStateFlow()
+    // Active & Queued downloads
+    private val _items = MutableStateFlow<List<DownloadItem>>(emptyList())
+    val items = _items.asStateFlow()
+
+    private val activeJobs = mutableMapOf<String, Job>()
 
     inner class LocalBinder : Binder() {
-        fun getService() = this@DownloadService
+        fun getService(): DownloadService = this@DownloadService
     }
 
     override fun onBind(intent: Intent): IBinder = binder
@@ -64,125 +70,187 @@ class DownloadService : Service() {
         return START_NOT_STICKY
     }
 
-    // ─── Queue ───────────────────────────────────────────────────────────────
-
-    fun enqueue(req: DownloadRequest) {
+    fun enqueue(req: DownloadRequest, videoTitle: String = "", thumbnailUrl: String = "") {
         val item = DownloadItem(
-            id          = req.id,
-            videoInfo   = VideoInfo(url = req.url),
-            container   = req.container,
-            quality     = req.quality,
+            id = req.id,
+            videoInfo = VideoInfo(
+                url = req.url,
+                title = videoTitle.ifBlank { req.url.takeLast(40) },
+                thumbnailUrl = thumbnailUrl
+            ),
+            container = req.container,
+            quality = req.quality,
+            status = DownloadStatus.QUEUED
         )
-        _items.value = _items.value + item
-        scope.launch { runDownload(req, item) }
+
+        _items.update { it + item }
+
+        val job = scope.launch {
+            runDownload(req, item)
+        }
+        activeJobs[req.id] = job
     }
 
     private suspend fun runDownload(req: DownloadRequest, item: DownloadItem) {
-        updateItem(item.id) { it.copy(status = DownloadStatus.DOWNLOADING) }
-        updateNotification("Downloading: ${req.url.takeLast(40)}")
+        updateItem(item.id) { it.copy(status = DownloadStatus.DOWNLOADING, progress = 0) }
+        updateNotification("Downloading: ${item.videoInfo.title}")
+
+        val outDir = getDownloadDirectory(applicationContext)
 
         try {
-            val args = buildYtdlpArgs(req)
-            val process = ProcessBuilder(args)
-                .redirectErrorStream(true)
-                .start()
+            // 1. Initiate download job on backend server
+            updateItem(item.id) { it.copy(speed = "Starting…", eta = "") }
+            val jobId = ApiService.startDownload(
+                videoUrl = req.url,
+                container = req.container,
+                quality = req.quality,
+                customServerUrl = req.serverUrl
+            )
 
-            val reader = BufferedReader(InputStreamReader(process.inputStream))
-            var line: String?
-            while (reader.readLine().also { line = it } != null) {
-                line?.let { parseLine(it, item.id) }
-            }
-            val code = process.waitFor()
-            if (code == 0) {
-                updateItem(item.id) { it.copy(status = DownloadStatus.DONE, progress = 100) }
-            } else {
-                updateItem(item.id) {
-                    it.copy(status = DownloadStatus.ERROR, errorMessage = "Exit code $code")
+            // 2. Poll progress from server
+            var isFinished = false
+            var serverFilename = "download_${req.id}.${req.container.lowercase()}"
+
+            while (!isFinished && currentCoroutineContext().isActive) {
+                delay(1200)
+                try {
+                    val statusJson = ApiService.getStatus(jobId, req.serverUrl)
+                    val status = statusJson.optString("status", "")
+                    val progress = statusJson.optInt("progress", 0)
+                    val speed = statusJson.optString("speed", "")
+                    val eta = statusJson.optString("eta", "")
+                    val title = statusJson.optString("title", "")
+                    val filename = statusJson.optString("filename", "")
+
+                    if (filename.isNotBlank()) {
+                        serverFilename = filename
+                    }
+
+                    if (title.isNotBlank() && item.videoInfo.title.isBlank()) {
+                        updateItem(item.id) {
+                            it.copy(videoInfo = it.videoInfo.copy(title = title))
+                        }
+                    }
+
+                    when (status) {
+                        "downloading" -> {
+                            updateItem(item.id) {
+                                it.copy(
+                                    status = DownloadStatus.DOWNLOADING,
+                                    progress = progress,
+                                    speed = speed,
+                                    eta = eta
+                                )
+                            }
+                            updateNotification("Downloading: $progress% ($speed)")
+                        }
+                        "processing" -> {
+                            updateItem(item.id) {
+                                it.copy(
+                                    status = DownloadStatus.POST_PROCESSING,
+                                    progress = 95,
+                                    speed = "Merging audio/video…",
+                                    eta = ""
+                                )
+                            }
+                            updateNotification("Processing high quality merge…")
+                        }
+                        "done" -> {
+                            isFinished = true
+                        }
+                        "error" -> {
+                            val err = statusJson.optString("error", "Server download failed")
+                            throw Exception(err)
+                        }
+                    }
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    // Continue polling unless error state
                 }
             }
+
+            // 3. Download the merged file directly to local storage
+            val cleanFilename = serverFilename.replace("[/\\\\?%*:|\"<>]".toRegex(), "_")
+            val targetFile = File(outDir, cleanFilename)
+
+            updateItem(item.id) {
+                it.copy(
+                    status = DownloadStatus.DOWNLOADING,
+                    progress = 98,
+                    speed = "Saving to phone…",
+                    eta = ""
+                )
+            }
+
+            ApiService.downloadFile(jobId, targetFile, req.serverUrl) { pct, spd ->
+                updateItem(item.id) {
+                    it.copy(progress = pct, speed = spd)
+                }
+            }
+
+            // Scan file with MediaStore so it appears in Gallery/Videos/Music
+            MediaScannerConnection.scanFile(
+                applicationContext,
+                arrayOf(targetFile.absolutePath),
+                null
+            ) { _, _ -> }
+
+            updateItem(item.id) {
+                it.copy(
+                    status = DownloadStatus.DONE,
+                    progress = 100,
+                    speed = "",
+                    eta = "",
+                    localFilePath = targetFile.absolutePath
+                )
+            }
+            updateNotification("Downloaded: ${targetFile.name}")
+
+        } catch (e: CancellationException) {
+            updateItem(item.id) { it.copy(status = DownloadStatus.CANCELLED) }
         } catch (e: Exception) {
             updateItem(item.id) {
-                it.copy(status = DownloadStatus.ERROR, errorMessage = e.message ?: "Unknown error")
+                it.copy(
+                    status = DownloadStatus.ERROR,
+                    errorMessage = e.message ?: "Download failed"
+                )
+            }
+            updateNotification("Download Error: ${e.message?.take(30)}")
+        } finally {
+            activeJobs.remove(req.id)
+            if (activeJobs.isEmpty()) {
+                updateNotification("Downloads completed")
             }
         }
-        updateNotification("Idle")
     }
-
-    // ─── yt-dlp argument builder ─────────────────────────────────────────────
-
-    private fun buildYtdlpArgs(req: DownloadRequest): List<String> {
-        val audioFormats = setOf("MP3", "M4A", "FLAC", "WAV", "OGG", "OPUS")
-        val qualityMap = mapOf(
-            "Best"       to "bestvideo+bestaudio/best",
-            "4K (2160p)" to "bestvideo[height<=2160]+bestaudio/best[height<=2160]",
-            "2K (1440p)" to "bestvideo[height<=1440]+bestaudio/best[height<=1440]",
-            "1080p"      to "bestvideo[height<=1080]+bestaudio/best[height<=1080]",
-            "720p"       to "bestvideo[height<=720]+bestaudio/best[height<=720]",
-            "480p"       to "bestvideo[height<=480]+bestaudio/best[height<=480]",
-            "360p"       to "bestvideo[height<=360]+bestaudio/best[height<=360]",
-        )
-        val isAudio = req.container.uppercase() in audioFormats
-        val out = "${req.outputDir}/%(title)s.%(ext)s"
-
-        return buildList {
-            add("yt-dlp")
-            add("--newline")
-            add("-o"); add(out)
-            if (isAudio) {
-                add("-f"); add("bestaudio/best")
-                add("-x"); add("--audio-format"); add(req.container.lowercase())
-                add("--audio-quality"); add("0")
-            } else {
-                val fmt = qualityMap[req.quality] ?: qualityMap["Best"]!!
-                add("-f"); add(fmt)
-                add("--merge-output-format"); add(req.container.lowercase())
-            }
-            if (req.ffmpegPath.isNotBlank()) {
-                add("--ffmpeg-location"); add(req.ffmpegPath)
-            }
-            add(req.url)
-        }
-    }
-
-    // ─── Progress parser ─────────────────────────────────────────────────────
-
-    private val pctRegex   = Regex("""(\d+\.?\d*)%""")
-    private val speedRegex = Regex("""(\d+\.?\d*\s*[KMG]iB/s)""")
-    private val etaRegex   = Regex("""ETA\s+([\d:]+)""")
-
-    private fun parseLine(line: String, id: String) {
-        if (line.contains("[download]")) {
-            val pct   = pctRegex.find(line)?.groupValues?.get(1)?.toFloatOrNull()?.toInt() ?: return
-            val speed = speedRegex.find(line)?.groupValues?.get(1) ?: ""
-            val eta   = etaRegex.find(line)?.groupValues?.get(1) ?: ""
-            updateItem(id) { it.copy(progress = pct, speed = speed, eta = eta) }
-        } else if (line.contains("Destination:") || line.contains("Merging")) {
-            updateItem(id) { it.copy(status = DownloadStatus.POST_PROCESSING) }
-        }
-    }
-
-    // ─── Helpers ─────────────────────────────────────────────────────────────
 
     private fun updateItem(id: String, transform: (DownloadItem) -> DownloadItem) {
-        _items.value = _items.value.map { if (it.id == id) transform(it) else it }
+        _items.update { list ->
+            list.map { if (it.id == id) transform(it) else it }
+        }
     }
 
     fun cancelItem(id: String) {
+        activeJobs[id]?.cancel()
+        activeJobs.remove(id)
         updateItem(id) { it.copy(status = DownloadStatus.CANCELLED) }
     }
 
     fun clearDone() {
-        _items.value = _items.value.filter {
-            it.status == DownloadStatus.QUEUED || it.status == DownloadStatus.DOWNLOADING
+        _items.update { list ->
+            list.filter { it.status == DownloadStatus.QUEUED || it.status == DownloadStatus.DOWNLOADING }
         }
     }
 
-    // ─── Notifications ───────────────────────────────────────────────────────
-
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val ch = NotificationChannel(CHANNEL_ID, "Downloads",
-                NotificationManager.IMPORTANCE_LOW)
+            val ch = NotificationChannel(
+                CHANNEL_ID,
+                "Downloads",
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "Download progress notifications"
+            }
             getSystemService(NotificationManager::class.java).createNotificationChannel(ch)
         }
     }
@@ -196,7 +264,7 @@ class DownloadService : Service() {
             .build()
 
     private fun updateNotification(text: String) {
-        val nm = getSystemService(NotificationManager::class.java)
+        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.notify(NOTIF_ID, buildNotification(text))
     }
 

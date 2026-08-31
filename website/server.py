@@ -251,6 +251,64 @@ def api_info():
 
 
 # ═════════════════════════════════════════════════════════════════════════════
+#  API — Fetch Playlist Info
+# ═════════════════════════════════════════════════════════════════════════════
+
+@app.route("/api/playlist", methods=["POST"])
+def api_playlist():
+    data = request.get_json(force=True)
+    url  = data.get("url", "").strip()
+    if not url:
+        return jsonify({"error": "No URL provided"}), 400
+
+    try:
+        ydl_opts = _base_opts()
+        ydl_opts["skip_download"] = True
+        ydl_opts["extract_flat"] = True
+        ydl_opts["noplaylist"] = False
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+
+        entries = info.get("entries") or []
+        items = []
+        for e in entries:
+            if not e:
+                continue
+            vid_id = e.get("id", "")
+            vid_url = e.get("url") or (f"https://www.youtube.com/watch?v={vid_id}" if vid_id else "")
+            
+            # Formatted duration
+            duration = int(e.get("duration", 0) or 0)
+            hrs, rem = divmod(duration, 3600)
+            mins, secs = divmod(rem, 60)
+            dur_str = f"{hrs:02d}:{mins:02d}:{secs:02d}" if hrs else f"{mins:02d}:{secs:02d}"
+
+            thumbs = e.get("thumbnails") or []
+            thumb_url = thumbs[-1].get("url") if thumbs else (f"https://i.ytimg.com/vi/{vid_id}/hqdefault.jpg" if vid_id else "")
+
+            items.append({
+                "id": vid_id,
+                "title": e.get("title", "Unknown Title"),
+                "duration": dur_str,
+                "duration_seconds": duration,
+                "url": vid_url,
+                "thumbnail": thumb_url,
+                "channel": e.get("uploader") or e.get("channel") or "",
+            })
+
+        return jsonify({
+            "title": info.get("title", "YouTube Playlist"),
+            "author": info.get("uploader") or info.get("channel") or "",
+            "item_count": len(items),
+            "items": items,
+            "url": url,
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+# ═════════════════════════════════════════════════════════════════════════════
 #  API — Supported Formats
 # ═════════════════════════════════════════════════════════════════════════════
 
