@@ -27,10 +27,23 @@ data class UiState(
     val selectedContainer: String = "MP4",
     val serverUrl: String = "", // Empty means 100% On-Device Standalone Engine
     val downloadedFiles: List<DownloadedFile> = emptyList(),
+    val albums: List<AuraAlbum> = emptyList(),
+    val artists: List<AuraArtist> = emptyList(),
+    val favorites: Set<String> = emptySet(),
+    val smartPlaylists: List<SmartPlaylist> = emptyList(),
+    val activePlaylist: SmartPlaylist? = null,
+    val statistics: ListeningStatistics = ListeningStatistics(),
+    val aiDjCommentary: AiDjCommentary? = null,
+    val searchQuery: String = "",
     val isScanningFiles: Boolean = false,
     val isHachimanMode: Boolean = false,
+    val isOtakuMode: Boolean = false,
     val terminalInput: String = "",
     val isRunningCommand: Boolean = false,
+    val autoMixSession: AutoMixSession = AutoMixSession(),
+    val visualizerMode: VisualizerMode = VisualizerMode.SPECTRUM,
+    val isVideoPlayerFullscreen: Boolean = false,
+    val activeVideoFile: DownloadedFile? = null
 )
 
 enum class DownloadType { VIDEO, AUDIO }
@@ -43,7 +56,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val _ui = MutableStateFlow(
         UiState(
             serverUrl = prefs.getString("server_url", "") ?: "",
-            isHachimanMode = prefs.getBoolean("hachiman_mode", false)
+            isHachimanMode = prefs.getBoolean("hachiman_mode", false),
+            isOtakuMode = prefs.getBoolean("otaku_mode", false),
+            favorites = prefs.getStringSet("aura_favorites", emptySet()) ?: emptySet()
         )
     )
     val ui = _ui.asStateFlow()
@@ -235,40 +250,95 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun cancelItem(id: String) = downloadService?.cancelItem(id)
     fun clearDone()            = downloadService?.clearDone()
 
-    // ── Library ───────────────────────────────────────────────────────────────
+    // ── AURA Library & Intelligence ─────────────────────────────────────────
 
     fun loadDownloadedFiles() {
         viewModelScope.launch(Dispatchers.IO) {
             _ui.update { it.copy(isScanningFiles = true) }
-            val downloadDir = DownloadService.getDownloadDirectory(getApplication())
-            val validExts = setOf("mp4", "mkv", "webm", "avi", "mp3", "m4a", "flac", "wav", "ogg", "opus")
+            val files = com.ypdlp.downloader.aura.LibraryScanner.scanLocalMedia(getApplication())
+            val albums = com.ypdlp.downloader.aura.LibraryScanner.groupAlbums(files)
+            val artists = com.ypdlp.downloader.aura.LibraryScanner.groupArtists(files)
+            val stats = com.ypdlp.downloader.aura.LibraryScanner.computeStatistics(files, _ui.value.favorites)
 
-            val filesList = mutableListOf<DownloadedFile>()
-            if (downloadDir.exists() && downloadDir.isDirectory) {
-                downloadDir.listFiles()?.filter { it.isFile && it.extension.lowercase() in validExts }
-                    ?.sortedByDescending { it.lastModified() }
-                    ?.forEach { file ->
-                        val isVid = file.extension.lowercase() in setOf("mp4", "mkv", "webm", "avi")
-                        val sizeMb = file.length() / (1024.0 * 1024.0)
-                        val sizeFormatted = if (sizeMb >= 1024) "%.2f GB".format(sizeMb / 1024.0) else "%.1f MB".format(sizeMb)
-
-                        filesList.add(
-                            DownloadedFile(
-                                file = file,
-                                name = file.name,
-                                title = file.nameWithoutExtension,
-                                sizeBytes = file.length(),
-                                sizeFormatted = sizeFormatted,
-                                isVideo = isVid,
-                                path = file.absolutePath,
-                                lastModified = file.lastModified(),
-                                extension = file.extension.uppercase()
-                            )
-                        )
-                    }
+            // Generate Mood Playlists
+            val moodPlaylists = MoodType.values().map { mood ->
+                com.ypdlp.downloader.aura.MagicPlaylistEngine.generateMoodPlaylist(mood, files)
             }
-            _ui.update { it.copy(downloadedFiles = filesList, isScanningFiles = false) }
+
+            _ui.update {
+                it.copy(
+                    downloadedFiles = files,
+                    albums = albums,
+                    artists = artists,
+                    smartPlaylists = moodPlaylists,
+                    statistics = stats,
+                    isScanningFiles = false
+                )
+            }
         }
+    }
+
+    fun toggleFavorite(file: DownloadedFile) {
+        val currentFavs = _ui.value.favorites.toMutableSet()
+        if (currentFavs.contains(file.path)) {
+            currentFavs.remove(file.path)
+        } else {
+            currentFavs.add(file.path)
+        }
+        prefs.edit().putStringSet("aura_favorites", currentFavs).apply()
+        _ui.update { it.copy(favorites = currentFavs) }
+    }
+
+    fun setSearchQuery(q: String) {
+        _ui.update { it.copy(searchQuery = q) }
+    }
+
+    fun setVisualizerMode(mode: VisualizerMode) {
+        _ui.update { it.copy(visualizerMode = mode) }
+    }
+
+    fun toggleOtakuMode(): Boolean {
+        val newMode = !_ui.value.isOtakuMode
+        prefs.edit().putBoolean("otaku_mode", newMode).apply()
+        _ui.update { it.copy(isOtakuMode = newMode) }
+        return newMode
+    }
+
+    fun generateMagicPlaylist(prompt: String) {
+        val playlist = com.ypdlp.downloader.aura.MagicPlaylistEngine.generateFromPrompt(prompt, _ui.value.downloadedFiles)
+        _ui.update {
+            it.copy(
+                activePlaylist = playlist,
+                smartPlaylists = listOf(playlist) + it.smartPlaylists
+            )
+        }
+        playlist.tracks.firstOrNull()?.let { playMediaFile(it) }
+    }
+
+    fun startAiDjSession() {
+        val (commentary, sessionTracks) = com.ypdlp.downloader.aura.AiDjService.generateDjSession(_ui.value.downloadedFiles)
+        _ui.update { it.copy(aiDjCommentary = commentary) }
+        sessionTracks.firstOrNull()?.let { playMediaFile(it) }
+    }
+
+    fun toggleAutoMix() {
+        val cur = _ui.value.autoMixSession
+        val updated = cur.copy(isEnabled = !cur.isEnabled)
+        _ui.update { it.copy(autoMixSession = updated) }
+    }
+
+    fun setAutoMixTransitionMode(mode: AutoMixTransitionMode) {
+        val dur = com.ypdlp.downloader.aura.AutoMixEngine.getOptimalTransitionDuration(mode)
+        val updated = _ui.value.autoMixSession.copy(transitionMode = mode, transitionDurationSec = dur)
+        _ui.update { it.copy(autoMixSession = updated) }
+    }
+
+    fun openVideoPlayer(file: DownloadedFile) {
+        _ui.update { it.copy(isVideoPlayerFullscreen = true, activeVideoFile = file) }
+    }
+
+    fun closeVideoPlayer() {
+        _ui.update { it.copy(isVideoPlayerFullscreen = false, activeVideoFile = null) }
     }
 
     fun deleteDownloadedFile(file: DownloadedFile) {
@@ -287,6 +357,27 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             }
             loadDownloadedFiles()
         }
+    }
+
+    fun playNextInQueue() {
+        val files = _ui.value.downloadedFiles
+        val cur = playerState.value.currentFile
+        if (files.isEmpty()) return
+        val next = if (cur != null) {
+            val idx = files.indexOfFirst { it.path == cur.path }
+            if (idx in 0 until files.size - 1) files[idx + 1] else files.first()
+        } else {
+            files.first()
+        }
+        playMediaFile(next)
+    }
+
+    fun seekTo(posMs: Long) {
+        val context = getApplication<Application>()
+        val intent = Intent(context, MediaPlaybackService::class.java).apply {
+            action = MediaPlaybackService.ACTION_PLAY
+        }
+        // Direct seek via binder if available or service
     }
 
     fun playMediaFile(file: DownloadedFile) {

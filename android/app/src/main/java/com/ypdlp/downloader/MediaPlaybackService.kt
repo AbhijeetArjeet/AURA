@@ -15,9 +15,11 @@ import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
+import com.ypdlp.downloader.aura.AuraPlaybackEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -43,12 +45,12 @@ class MediaPlaybackService : Service() {
     }
 
     private val binder = LocalBinder()
-    private var mediaPlayer: MediaPlayer? = null
-    private var progressJob: Job? = null
-    private val scope = CoroutineScope(Dispatchers.Main)
+    private var auraEngine: AuraPlaybackEngine? = null
+    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     inner class LocalBinder : Binder() {
         fun getService(): MediaPlaybackService = this@MediaPlaybackService
+        fun getEngine(): AuraPlaybackEngine? = auraEngine
     }
 
     override fun onBind(intent: Intent?): IBinder = binder
@@ -56,6 +58,37 @@ class MediaPlaybackService : Service() {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
+        auraEngine = AuraPlaybackEngine(applicationContext)
+
+        // Observe playback state & visualizer data
+        scope.launch {
+            auraEngine!!.isPlaying.collect { playing ->
+                _playerState.update { it.copy(isPlaying = playing) }
+                _playerState.value.currentFile?.let { file ->
+                    updateNotification(file.title, playing)
+                }
+            }
+        }
+        scope.launch {
+            auraEngine!!.currentPosition.collect { pos ->
+                _playerState.update { it.copy(currentPositionMs = pos) }
+            }
+        }
+        scope.launch {
+            auraEngine!!.duration.collect { dur ->
+                _playerState.update { it.copy(durationMs = dur) }
+            }
+        }
+        scope.launch {
+            auraEngine!!.visualizerBands.collect { bands ->
+                _playerState.update { it.copy(visualizerData = bands) }
+            }
+        }
+        scope.launch {
+            auraEngine!!.sleepMinutesLeft.collect { mins ->
+                _playerState.update { it.copy(sleepTimerMinutesLeft = mins) }
+            }
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -80,7 +113,7 @@ class MediaPlaybackService : Service() {
         val downloadedFile = DownloadedFile(
             file = file,
             name = file.name,
-            title = file.nameWithoutExtension,
+            title = file.nameWithoutExtension.replace("_", " "),
             sizeBytes = file.length(),
             sizeFormatted = "%.1f MB".format(file.length() / (1024.0 * 1024.0)),
             isVideo = file.extension.lowercase() in listOf("mp4", "mkv", "webm", "avi"),
@@ -89,96 +122,38 @@ class MediaPlaybackService : Service() {
             extension = file.extension.uppercase()
         )
 
-        try {
-            mediaPlayer?.release()
-            mediaPlayer = MediaPlayer().apply {
-                setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                        .build()
-                )
-                setWakeMode(applicationContext, PowerManager.PARTIAL_WAKE_LOCK)
-                setDataSource(applicationContext, Uri.fromFile(file))
-                prepare()
-                start()
-                setOnCompletionListener {
-                    _playerState.update { it.copy(isPlaying = false, currentPositionMs = 0L) }
-                    stopForeground(STOP_FOREGROUND_REMOVE)
-                }
-            }
-
-            _playerState.update {
-                it.copy(
-                    currentFile = downloadedFile,
-                    isPlaying = true,
-                    durationMs = mediaPlayer?.duration?.toLong() ?: 0L,
-                    currentPositionMs = 0L
-                )
-            }
-
-            startForeground(NOTIFICATION_ID, buildNotification(downloadedFile.title, isPlaying = true))
-            startProgressTracker()
-
-        } catch (e: Exception) {
-            e.printStackTrace()
+        _playerState.update {
+            it.copy(
+                currentFile = downloadedFile,
+                isPlaying = true
+            )
         }
+
+        auraEngine?.playFile(downloadedFile)
+        startForeground(NOTIFICATION_ID, buildNotification(downloadedFile.title, isPlaying = true))
     }
 
     fun pause() {
-        mediaPlayer?.let {
-            if (it.isPlaying) {
-                it.pause()
-                _playerState.update { state -> state.copy(isPlaying = false) }
-                updateNotification(_playerState.value.currentFile?.title ?: "Playback", isPlaying = false)
-            }
-        }
+        auraEngine?.pause()
     }
 
     fun resume() {
-        mediaPlayer?.let {
-            if (!it.isPlaying) {
-                it.start()
-                _playerState.update { state -> state.copy(isPlaying = true) }
-                updateNotification(_playerState.value.currentFile?.title ?: "Playback", isPlaying = true)
-                startProgressTracker()
-            }
-        }
+        auraEngine?.resume()
     }
 
     fun togglePlayPause() {
-        if (_playerState.value.isPlaying) {
-            pause()
-        } else {
-            resume()
-        }
+        auraEngine?.togglePlayPause()
     }
 
     fun seekTo(positionMs: Long) {
-        mediaPlayer?.seekTo(positionMs.toInt())
-        _playerState.update { it.copy(currentPositionMs = positionMs) }
+        auraEngine?.seekTo(positionMs)
     }
 
     fun stopPlayback() {
-        progressJob?.cancel()
-        mediaPlayer?.stop()
-        mediaPlayer?.release()
-        mediaPlayer = null
+        auraEngine?.release()
         _playerState.update { PlayerState() }
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
-    }
-
-    private fun startProgressTracker() {
-        progressJob?.cancel()
-        progressJob = scope.launch {
-            while (isActive && mediaPlayer?.isPlaying == true) {
-                val pos = mediaPlayer?.currentPosition?.toLong() ?: 0L
-                val dur = mediaPlayer?.duration?.toLong() ?: 0L
-                _playerState.update { it.copy(currentPositionMs = pos, durationMs = dur) }
-                delay(500)
-            }
-        }
     }
 
     private fun createNotificationChannel() {

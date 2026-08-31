@@ -1,11 +1,11 @@
-# 🎬 YPDlp — High-Performance YouTube Downloader & Media Suite
+# 🎧 AURA & YPDlp — Premium Music Universe & High-Performance Downloader
 
-[![GitHub Release](https://img.shields.io/badge/📦_Latest_Release-v1.0.14-success?style=for-the-badge&logo=github)](https://github.com/AbhijeetArjeet/yt_downloader/releases/tag/v1.0.14)
-[![Android](https://img.shields.io/badge/Android-APK_v1.0.14-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.14/YPDlp_Android_v1.0.14.apk)
-[![Windows](https://img.shields.io/badge/Windows-Desktop_x64-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.14/YPDlp_Windows_x64.zip)
+[![GitHub Release](https://img.shields.io/badge/📦_Latest_Release-v1.1.0-success?style=for-the-badge&logo=github)](https://github.com/AbhijeetArjeet/yt_downloader/releases/tag/v1.1.0)
+[![Android](https://img.shields.io/badge/Android-APK_v1.1.0-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.1.0/AURA_YPDlp_Android_v1.1.0.apk)
+[![Windows](https://img.shields.io/badge/Windows-Desktop_x64-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.1.0/YPDlp_Windows_x64.zip)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-**YPDlp** is a 100% standalone, zero-telemetry, on-device YouTube downloader and offline media suite engineered for **Windows Desktop** and **Android**. It merges high-bitrate video/audio streams on-device without relying on external servers.
+**AURA** is a Spotify/Apple Music/Winamp-inspired personal music universe combined with **YPDlp**'s 100% on-device standalone downloader. It turns your local music and video collection into an intelligent, evolving soundscape with real-time AutoMix DJ transitions, canvas visualizers, dynamic album art gradients, and an Otaku Mode.
 
 ---
 
@@ -13,23 +13,27 @@
 
 | Platform | Format | Package Link |
 |:---|:---|:---|
-| 📱 **Android** | APK (Universal) | [📥 **Download YPDlp_Android_v1.0.14.apk**](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.14/YPDlp_Android_v1.0.14.apk) |
-| 🖥️ **Windows (x64)** | Portable ZIP | [📥 **Download YPDlp_Windows_x64.zip**](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.14/YPDlp_Windows_x64.zip) |
+| 📱 **Android** | APK (Universal) | [📥 **Download AURA_YPDlp_Android_v1.1.0.apk**](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.1.0/AURA_YPDlp_Android_v1.1.0.apk) |
+| 🖥️ **Windows (x64)** | Portable ZIP | [📥 **Download YPDlp_Windows_x64.zip**](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.1.0/YPDlp_Windows_x64.zip) |
 | 📦 **All Releases** | Changelogs & Assets | [📂 **GitHub Releases Page**](https://github.com/AbhijeetArjeet/yt_downloader/releases) |
 
 ---
 
-## 📱 Android App Features (Liquid Crystal Edition)
+## 🎧 AURA Music Universe & Android Features
 
-- 💎 **Liquid Crystal Glass UI:** iOS-inspired translucent frosted glass, glowing neon accents, and smooth physics.
-- 📺 **In-App Fullscreen Video Player:** Watch downloaded videos directly inside the app with timeline scrubbing, fast-forward/rewind (+/- 10s), auto-hiding controls, and aspect ratio controls.
-- ⚡ **100% On-Device Standalone Engine:** Powered by embedded **Python 3.11** (`io.github.junkfood02.youtubedl-android:0.18.1`) + **FFmpeg**.
-- 🧩 **QuickJS JavaScript Engine (`libqjs.so`):** Native challenge solver to bypass YouTube's throttling & player signature changes.
-- 🎬 **True High-Res Extraction:** Download **4K (2160p)**, **2K (1440p)**, **1080p**, **720p**, and audio formats (**MP3, M4A, FLAC, OPUS, WAV**).
-- 📁 **Full Playlist Batch Downloader:** 1-tap automated playlist extraction and batch downloading.
-- 🎵 **Integrated Background Media Player:** Floating mini-player, lock-screen controls, and system notification playback.
-- 📂 **In-App Media Library:** Browse, watch, share, and manage downloaded video & audio directly.
-- 🛠️ **8MAN Easter Egg & Dev Terminal:** Tap Yukino to activate *Hachiman Mode* — an interactive terminal shell with diagnostic tools, cache clearing, latency testing, and live engine updating.
+- 🌌 **Dynamic Album Art Aura:** Extracts vibrant dominant colors from album covers to render seamless glowing atmospheric gradients.
+- 🎧 **AutoMix DJ Engine:** Live beat-matching and crossfade transitions (*Smooth Blend, Beat Match, DJ Sweep, Cinematic, Chill Wave, Hard Cut*) with configurable blend duration.
+- 🎛️ **Hardware-Accelerated Visualizers:** 5 interactive Canvas visualizer modes:
+  - 📊 **Spectrum:** Glowing audio frequency bars
+  - 🌊 **Waveform:** Oscilloscope sound wave
+  - 🪐 **Orbital Aura:** Circular orbit surrounding artwork
+  - ✨ **Starfield:** Bass-reactive floating particles
+  - 〰️ **Minimal Pulse:** Clean subtle rhythm pulse
+- 🎙️ **AURA AI DJ:** Atmospheric contextual listening sessions based on time of day, mood, and listening habits.
+- ✨ **Magic Playlist:** Generate custom playlists using natural language prompts (*"Walking alone at 2 AM", "Anime training arc", "Deep coding flow"*).
+- 🌸 **Dedicated Otaku Mode:** Animated Sakura atmosphere, Japanese typography subtitles (`「本物が欲しい」`), anime OST auto-categorization, and Hachiman/Yukino companion commentary.
+- 📺 **Dual Audio & Music Video Switching:** Seamlessly toggle between audio-only listening and fullscreen video mode for downloaded MP4 music videos.
+- ⚡ **100% On-Device Standalone Downloader:** Integrated Python 3.11 + QuickJS + FFmpeg for downloading lossless MP3s, 1080p, and 4K videos directly into your AURA library.
 
 ---
 

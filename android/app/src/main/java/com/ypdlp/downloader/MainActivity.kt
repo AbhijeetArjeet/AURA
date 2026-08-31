@@ -125,6 +125,7 @@ fun YPDlpApp(
 
     var selectedTab by remember { mutableIntStateOf(0) }
     var showSettingsDialog by remember { mutableStateOf(false) }
+    var showNowPlayingScreen by remember { mutableStateOf(false) }
     var activeVideoFile by remember { mutableStateOf<DownloadedFile?>(null) }
 
     var logoTapCount by remember { mutableIntStateOf(0) }
@@ -160,10 +161,10 @@ fun YPDlpApp(
                             logoTapCount = 0
                             val enabled = vm.toggleHachimanMode()
                             if (enabled) {
-                                selectedTab = 3 // Switch directly to 8MAN Console
+                                selectedTab = 4 // Switch directly to 8MAN Console
                                 Toast.makeText(context, "★ 8MAN Mode Activated! 'Youth is a lie. It is evil.'", Toast.LENGTH_LONG).show()
                             } else {
-                                if (selectedTab == 3) selectedTab = 0
+                                if (selectedTab == 4) selectedTab = 0
                                 Toast.makeText(context, "❄ Yukino Mode Restored: 'Being hated is not a virtue.'", Toast.LENGTH_LONG).show()
                             }
                         } else if (logoTapCount in 2..4) {
@@ -178,7 +179,7 @@ fun YPDlpApp(
                 Column {
                     // Floating Liquid Glass Mini-Player (if playing audio/video in background)
                     AnimatedVisibility(
-                        visible = playerState.currentFile != null && activeVideoFile == null,
+                        visible = playerState.currentFile != null && activeVideoFile == null && !showNowPlayingScreen,
                         enter = slideInVertically { it } + fadeIn(),
                         exit = slideOutVertically { it } + fadeOut()
                     ) {
@@ -189,7 +190,8 @@ fun YPDlpApp(
                                 positionMs = playerState.currentPositionMs,
                                 durationMs = playerState.durationMs,
                                 onToggle = vm::togglePlayback,
-                                onClose = vm::stopPlayback
+                                onClose = vm::stopPlayback,
+                                onExpand = { showNowPlayingScreen = true }
                             )
                         }
                     }
@@ -221,9 +223,19 @@ fun YPDlpApp(
                     label = "TabContent"
                 ) { tab ->
                     when (tab) {
-                        0 -> DownloadTab(ui = ui, vm = vm)
-                        1 -> QueueTab(queue = queue, vm = vm)
-                        2 -> LibraryTab(
+                        0 -> com.ypdlp.downloader.aura.AuraHomeScreen(
+                            ui = ui,
+                            vm = vm,
+                            onOpenAutoMix = { selectedTab = 1 },
+                            onOpenNowPlaying = {}
+                        )
+                        1 -> com.ypdlp.downloader.aura.AuraAutoMixScreen(
+                            session = ui.autoMixSession,
+                            playerState = playerState,
+                            vm = vm
+                        )
+                        2 -> DownloadTab(ui = ui, vm = vm)
+                        3 -> LibraryTab(
                             ui = ui,
                             vm = vm,
                             onWatchVideo = { file ->
@@ -231,10 +243,19 @@ fun YPDlpApp(
                                 activeVideoFile = file
                             }
                         )
-                        3 -> HachimanConsoleTab(ui = ui, vm = vm)
+                        4 -> HachimanConsoleTab(ui = ui, vm = vm)
                     }
                 }
             }
+        }
+
+        // Fullscreen AURA Music Universe Player
+        if (showNowPlayingScreen && playerState.currentFile != null) {
+            com.ypdlp.downloader.aura.AuraNowPlayingScreen(
+                playerState = playerState,
+                vm = vm,
+                onClose = { showNowPlayingScreen = false }
+            )
         }
 
         // In-App Video Player Dialog
@@ -330,7 +351,7 @@ fun GlassTopBar(
 }
 
 // ────────────────────────────────────────────────────────────────────
-//  iOS Glass Capsule Bottom Navigation Bar
+//  iOS Glass Capsule Bottom Navigation Bar (AURA Universe)
 // ────────────────────────────────────────────────────────────────────
 @Composable
 fun GlassBottomNav(
@@ -345,7 +366,9 @@ fun GlassBottomNav(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 14.dp, vertical = 10.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .navigationBarsPadding(),
+        contentAlignment = Alignment.Center
     ) {
         Surface(
             modifier = Modifier
@@ -363,35 +386,41 @@ fun GlassBottomNav(
             ) {
                 NavCapsuleItem(
                     selected = selected == 0,
-                    icon = Icons.Filled.Download,
-                    label = "Download",
-                    activeGradient = activeGrad,
+                    icon = Icons.Filled.Home,
+                    label = "AURA",
+                    activeGradient = Brush.horizontalGradient(listOf(Color(0xFF9D4EDD), Color(0xFF00E5FF))),
                     onClick = { onSelect(0) }
                 )
                 NavCapsuleItem(
                     selected = selected == 1,
-                    icon = Icons.Filled.FormatListBulleted,
-                    label = "Queue",
-                    badge = if (queueBadgeCount > 0) "$queueBadgeCount" else null,
-                    activeGradient = activeGrad,
+                    icon = Icons.Filled.Tune,
+                    label = "AutoMix",
+                    activeGradient = Brush.horizontalGradient(listOf(Color(0xFFFF2A55), Color(0xFFFF6B2B))),
                     onClick = { onSelect(1) }
                 )
                 NavCapsuleItem(
                     selected = selected == 2,
-                    icon = Icons.Filled.VideoLibrary,
-                    label = "Downloads",
-                    badge = if (downloadsCount > 0) "$downloadsCount" else null,
+                    icon = Icons.Filled.Download,
+                    label = "Get",
                     activeGradient = activeGrad,
                     onClick = { onSelect(2) }
                 )
+                NavCapsuleItem(
+                    selected = selected == 3,
+                    icon = Icons.Filled.VideoLibrary,
+                    label = "Library",
+                    badge = if (downloadsCount > 0) "$downloadsCount" else null,
+                    activeGradient = activeGrad,
+                    onClick = { onSelect(3) }
+                )
                 if (isHachimanMode) {
                     NavCapsuleItem(
-                        selected = selected == 3,
+                        selected = selected == 4,
                         icon = Icons.Filled.Terminal,
                         label = "8MAN",
                         badge = "DEV",
                         activeGradient = HachimanGradient,
-                        onClick = { onSelect(3) }
+                        onClick = { onSelect(4) }
                     )
                 }
             }
@@ -1612,7 +1641,8 @@ fun FloatingMiniPlayer(
     positionMs: Long,
     durationMs: Long,
     onToggle: () -> Unit,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    onExpand: () -> Unit = {}
 ) {
     val context = LocalContext.current
 
@@ -1620,7 +1650,8 @@ fun FloatingMiniPlayer(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 6.dp)
-            .shadow(12.dp, RoundedCornerShape(20.dp)),
+            .shadow(12.dp, RoundedCornerShape(20.dp))
+            .clickable(onClick = onExpand),
         shape = RoundedCornerShape(20.dp),
         color = Color(0xFF1B1E2E).copy(alpha = 0.95f),
         border = BorderStroke(1.dp, LiquidCyan.copy(alpha = 0.4f))
@@ -1660,7 +1691,7 @@ fun FloatingMiniPlayer(
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
-                        if (isPlaying) "Playing in background" else "Paused",
+                        if (isPlaying) "Playing • Tap to open AURA Player" else "Paused",
                         fontSize = 10.sp,
                         color = TextMuted
                     )
