@@ -76,7 +76,7 @@ def _base_opts():
         "noplaylist":  True,
         "extractor_args": {
             "youtube": {
-                "player_client": ["web", "mweb", "android", "ios"],
+                "player_client": ["android", "ios", "mweb", "web"],
             }
         }
     }

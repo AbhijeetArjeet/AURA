@@ -116,6 +116,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 if (isReady && _ui.value.serverUrl.isBlank()) {
                     val req = YoutubeDLRequest(url).apply {
                         addOption("--no-check-certificates")
+                        addOption("--extractor-args", "youtube:player_client=android,ios")
                     }
                     val ytdlInfo = YoutubeDL.getInstance().getInfo(req)
 

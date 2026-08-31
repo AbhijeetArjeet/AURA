@@ -5,9 +5,15 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
+import android.view.ViewGroup
+import android.widget.FrameLayout
+import android.widget.VideoView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
@@ -119,6 +125,7 @@ fun YPDlpApp(
 
     var selectedTab by remember { mutableIntStateOf(0) }
     var showSettingsDialog by remember { mutableStateOf(false) }
+    var activeVideoFile by remember { mutableStateOf<DownloadedFile?>(null) }
 
     var logoTapCount by remember { mutableIntStateOf(0) }
     var lastLogoTapTime by remember { mutableLongStateOf(0L) }
@@ -171,7 +178,7 @@ fun YPDlpApp(
                 Column {
                     // Floating Liquid Glass Mini-Player (if playing audio/video in background)
                     AnimatedVisibility(
-                        visible = playerState.currentFile != null,
+                        visible = playerState.currentFile != null && activeVideoFile == null,
                         enter = slideInVertically { it } + fadeIn(),
                         exit = slideOutVertically { it } + fadeOut()
                     ) {
@@ -216,11 +223,28 @@ fun YPDlpApp(
                     when (tab) {
                         0 -> DownloadTab(ui = ui, vm = vm)
                         1 -> QueueTab(queue = queue, vm = vm)
-                        2 -> LibraryTab(ui = ui, vm = vm)
+                        2 -> LibraryTab(
+                            ui = ui,
+                            vm = vm,
+                            onWatchVideo = { file ->
+                                vm.stopPlayback()
+                                activeVideoFile = file
+                            }
+                        )
                         3 -> HachimanConsoleTab(ui = ui, vm = vm)
                     }
                 }
             }
+        }
+
+        // In-App Video Player Dialog
+        activeVideoFile?.let { videoFile ->
+            InAppVideoPlayerDialog(
+                file = videoFile,
+                onDismiss = { activeVideoFile = null },
+                onOpenExternal = { openWithExternalPlayer(context, videoFile.file) },
+                onShare = { shareMediaFile(context, videoFile.file) }
+            )
         }
 
         // Settings Dialog
@@ -1048,7 +1072,11 @@ fun QueueCardItem(item: DownloadItem, onCancel: () -> Unit) {
 //  Downloads / Library Tab (In-App Media Player & Manager)
 // ────────────────────────────────────────────────────────────────────
 @Composable
-fun LibraryTab(ui: UiState, vm: MainViewModel) {
+fun LibraryTab(
+    ui: UiState,
+    vm: MainViewModel,
+    onWatchVideo: (DownloadedFile) -> Unit
+) {
     val context = LocalContext.current
 
     Column(
@@ -1119,6 +1147,16 @@ fun LibraryTab(ui: UiState, vm: MainViewModel) {
                     DownloadedMediaCard(
                         file = file,
                         onPlay = {
+                            if (file.isVideo) {
+                                onWatchVideo(file)
+                            } else {
+                                vm.playMediaFile(file)
+                            }
+                        },
+                        onWatchInApp = {
+                            onWatchVideo(file)
+                        },
+                        onPlayAudio = {
                             vm.playMediaFile(file)
                         },
                         onOpenExternal = {
@@ -1145,72 +1183,423 @@ fun LibraryTab(ui: UiState, vm: MainViewModel) {
 fun DownloadedMediaCard(
     file: DownloadedFile,
     onPlay: () -> Unit,
+    onWatchInApp: () -> Unit,
+    onPlayAudio: () -> Unit,
     onOpenExternal: () -> Unit,
     onShare: () -> Unit,
     onDelete: () -> Unit
 ) {
     LiquidGlassCard {
-        Row(
+        Column(
             modifier = Modifier
                 .padding(14.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxWidth()
         ) {
-            // Media Icon / Play Trigger
-            Box(
-                modifier = Modifier
-                    .size(54.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(if (file.isVideo) LiquidNeonRed.copy(alpha = 0.15f) else LiquidPurple.copy(alpha = 0.15f))
-                    .border(1.dp, if (file.isVideo) LiquidNeonRed.copy(alpha = 0.3f) else LiquidPurple.copy(alpha = 0.3f), RoundedCornerShape(14.dp))
-                    .clickable(onClick = onPlay),
-                contentAlignment = Alignment.Center
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    if (file.isVideo) Icons.Filled.PlayCircle else Icons.Filled.MusicNote,
-                    contentDescription = "Play",
-                    tint = if (file.isVideo) LiquidNeonRed else LiquidPurple,
-                    modifier = Modifier.size(28.dp)
-                )
+                // Media Icon / Play Trigger
+                Box(
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(if (file.isVideo) LiquidNeonRed.copy(alpha = 0.15f) else LiquidPurple.copy(alpha = 0.15f))
+                        .border(1.dp, if (file.isVideo) LiquidNeonRed.copy(alpha = 0.3f) else LiquidPurple.copy(alpha = 0.3f), RoundedCornerShape(14.dp))
+                        .clickable(onClick = onPlay),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        if (file.isVideo) Icons.Filled.PlayCircle else Icons.Filled.MusicNote,
+                        contentDescription = "Play",
+                        tint = if (file.isVideo) LiquidNeonRed else LiquidPurple,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+
+                Spacer(Modifier.width(12.dp))
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable(onClick = onPlay),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        file.title,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPure,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(file.sizeFormatted, fontSize = 11.sp, color = LiquidCyan)
+                        Text("•", fontSize = 11.sp, color = TextDim)
+                        Text(file.extension, fontSize = 11.sp, color = TextMuted, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                // Quick Actions: Open External Player, Share, Delete
+                Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                    IconButton(onClick = onOpenExternal, modifier = Modifier.size(32.dp)) {
+                        Icon(Icons.Filled.OpenInNew, contentDescription = "Open", tint = TextMuted, modifier = Modifier.size(16.dp))
+                    }
+                    IconButton(onClick = onShare, modifier = Modifier.size(32.dp)) {
+                        Icon(Icons.Filled.Share, contentDescription = "Share", tint = TextMuted, modifier = Modifier.size(16.dp))
+                    }
+                    IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+                        Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = Color(0xFFFF5252), modifier = Modifier.size(16.dp))
+                    }
+                }
             }
 
-            Spacer(Modifier.width(12.dp))
+            if (file.isVideo) {
+                Spacer(Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = onWatchInApp,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(34.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = LiquidNeonRed.copy(alpha = 0.85f)),
+                        shape = RoundedCornerShape(10.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp)
+                    ) {
+                        Icon(Icons.Filled.SmartDisplay, contentDescription = null, Modifier.size(16.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Watch In-App", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                    }
 
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable(onClick = onPlay),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    file.title,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPure,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(file.sizeFormatted, fontSize = 11.sp, color = LiquidCyan)
-                    Text("•", fontSize = 11.sp, color = TextDim)
-                    Text(file.extension, fontSize = 11.sp, color = TextMuted, fontWeight = FontWeight.Bold)
-                }
-            }
-
-            // Quick Actions: Open External Player, Share, Delete
-            Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                IconButton(onClick = onOpenExternal, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Filled.OpenInNew, contentDescription = "Open", tint = TextMuted, modifier = Modifier.size(16.dp))
-                }
-                IconButton(onClick = onShare, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Filled.Share, contentDescription = "Share", tint = TextMuted, modifier = Modifier.size(16.dp))
-                }
-                IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = Color(0xFFFF5252), modifier = Modifier.size(16.dp))
+                    OutlinedButton(
+                        onClick = onPlayAudio,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(34.dp),
+                        border = BorderStroke(1.dp, LiquidPurple.copy(alpha = 0.5f)),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                        shape = RoundedCornerShape(10.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp)
+                    ) {
+                        Icon(Icons.Filled.Headphones, contentDescription = null, Modifier.size(15.dp), tint = LiquidPurple)
+                        Spacer(Modifier.width(6.dp))
+                        Text("Play Audio", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                    }
                 }
             }
         }
     }
+}
+
+// ────────────────────────────────────────────────────────────────────
+//  In-App Liquid Crystal Video Player Dialog
+// ────────────────────────────────────────────────────────────────────
+@Composable
+fun InAppVideoPlayerDialog(
+    file: DownloadedFile,
+    onDismiss: () -> Unit,
+    onOpenExternal: () -> Unit,
+    onShare: () -> Unit
+) {
+    var isPlaying by remember { mutableStateOf(true) }
+    var currentPositionMs by remember { mutableLongStateOf(0L) }
+    var durationMs by remember { mutableLongStateOf(0L) }
+    var isControlsVisible by remember { mutableStateOf(true) }
+    var videoViewRef by remember { mutableStateOf<VideoView?>(null) }
+
+    // Auto-hide controls after 4 seconds of inactivity
+    LaunchedEffect(isControlsVisible, isPlaying) {
+        if (isControlsVisible && isPlaying) {
+            kotlinx.coroutines.delay(4000)
+            isControlsVisible = false
+        }
+    }
+
+    // Live position tracking loop
+    LaunchedEffect(isPlaying) {
+        while (isPlaying) {
+            videoViewRef?.let { vv ->
+                if (vv.isPlaying) {
+                    currentPositionMs = vv.currentPosition.toLong()
+                    if (durationMs <= 0 && vv.duration > 0) {
+                        durationMs = vv.duration.toLong()
+                    }
+                }
+            }
+            kotlinx.coroutines.delay(250)
+        }
+    }
+
+    Dialog(
+        onDismissRequest = {
+            videoViewRef?.stopPlayback()
+            onDismiss()
+        },
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            dismissOnBackPress = true,
+            dismissOnClickOutside = false
+        )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                .clickable { isControlsVisible = !isControlsVisible }
+        ) {
+            // Video Surface
+            AndroidView(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .align(Alignment.Center),
+                factory = { ctx ->
+                    VideoView(ctx).apply {
+                        layoutParams = FrameLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                        ).apply {
+                            gravity = android.view.Gravity.CENTER
+                        }
+                        setVideoPath(file.path)
+                        setOnPreparedListener { mp ->
+                            durationMs = mp.duration.toLong()
+                            mp.isLooping = true
+                            start()
+                            isPlaying = true
+                        }
+                        setOnCompletionListener {
+                            isPlaying = false
+                        }
+                        videoViewRef = this
+                    }
+                },
+                update = { vv ->
+                    videoViewRef = vv
+                }
+            )
+
+            // Glass Overlay Controls
+            AnimatedVisibility(
+                visible = isControlsVisible,
+                enter = fadeIn(tween(200)),
+                exit = fadeOut(tween(200))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.55f))
+                ) {
+                    // Top Bar (Glass Header)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.TopCenter)
+                            .statusBarsPadding()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            IconButton(
+                                onClick = {
+                                    videoViewRef?.stopPlayback()
+                                    onDismiss()
+                                },
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.Black.copy(alpha = 0.6f))
+                            ) {
+                                Icon(Icons.Filled.ArrowBack, contentDescription = "Close", tint = Color.White)
+                            }
+                            Spacer(Modifier.width(12.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    file.title,
+                                    color = Color.White,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Surface(
+                                        shape = RoundedCornerShape(4.dp),
+                                        color = LiquidNeonRed.copy(alpha = 0.25f),
+                                        border = BorderStroke(1.dp, LiquidNeonRed.copy(alpha = 0.5f))
+                                    ) {
+                                        Text(
+                                            file.extension,
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = LiquidNeonRed,
+                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                        )
+                                    }
+                                    Text(
+                                        file.sizeFormatted,
+                                        fontSize = 11.sp,
+                                        color = LiquidCyan
+                                    )
+                                }
+                            }
+                        }
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            IconButton(
+                                onClick = onShare,
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.Black.copy(alpha = 0.6f))
+                            ) {
+                                Icon(Icons.Filled.Share, contentDescription = "Share", tint = Color.White, modifier = Modifier.size(18.dp))
+                            }
+                            IconButton(
+                                onClick = onOpenExternal,
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.Black.copy(alpha = 0.6f))
+                            ) {
+                                Icon(Icons.Filled.OpenInNew, contentDescription = "Open in VLC/MX", tint = Color.White, modifier = Modifier.size(18.dp))
+                            }
+                        }
+                    }
+
+                    // Center Play / Pause / Rewind / Skip Controls
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Rewind 10s
+                        IconButton(
+                            onClick = {
+                                videoViewRef?.let { vv ->
+                                    val newPos = (vv.currentPosition - 10000).coerceAtLeast(0)
+                                    vv.seekTo(newPos)
+                                    currentPositionMs = newPos.toLong()
+                                }
+                            },
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(Color.Black.copy(alpha = 0.5f))
+                        ) {
+                            Icon(Icons.Filled.Replay10, contentDescription = "Rewind 10s", tint = Color.White, modifier = Modifier.size(28.dp))
+                        }
+
+                        Spacer(Modifier.width(28.dp))
+
+                        // Large Play / Pause
+                        IconButton(
+                            onClick = {
+                                videoViewRef?.let { vv ->
+                                    if (vv.isPlaying) {
+                                        vv.pause()
+                                        isPlaying = false
+                                    } else {
+                                        vv.start()
+                                        isPlaying = true
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .size(72.dp)
+                                .clip(CircleShape)
+                                .background(LiquidNeonRed.copy(alpha = 0.85f))
+                                .border(2.dp, Color.White.copy(alpha = 0.4f), CircleShape)
+                        ) {
+                            Icon(
+                                if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                                contentDescription = if (isPlaying) "Pause" else "Play",
+                                tint = Color.White,
+                                modifier = Modifier.size(42.dp)
+                            )
+                        }
+
+                        Spacer(Modifier.width(28.dp))
+
+                        // Forward 10s
+                        IconButton(
+                            onClick = {
+                                videoViewRef?.let { vv ->
+                                    val newPos = (vv.currentPosition + 10000).coerceAtMost(vv.duration)
+                                    vv.seekTo(newPos)
+                                    currentPositionMs = newPos.toLong()
+                                }
+                            },
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(Color.Black.copy(alpha = 0.5f))
+                        ) {
+                            Icon(Icons.Filled.Forward10, contentDescription = "Forward 10s", tint = Color.White, modifier = Modifier.size(28.dp))
+                        }
+                    }
+
+                    // Bottom Seek & Time Controls
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.BottomCenter)
+                            .navigationBarsPadding()
+                            .padding(horizontal = 16.dp, vertical = 14.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                formatDurationMs(currentPositionMs),
+                                color = Color.White,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                formatDurationMs(durationMs),
+                                color = TextMuted,
+                                fontSize = 12.sp
+                            )
+                        }
+
+                        Slider(
+                            value = if (durationMs > 0) (currentPositionMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f) else 0f,
+                            onValueChange = { frac ->
+                                val target = (frac * durationMs).toLong()
+                                currentPositionMs = target
+                                videoViewRef?.seekTo(target.toInt())
+                            },
+                            colors = SliderDefaults.colors(
+                                thumbColor = LiquidNeonRed,
+                                activeTrackColor = LiquidNeonRed,
+                                inactiveTrackColor = Color.White.copy(alpha = 0.25f)
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun formatDurationMs(ms: Long): String {
+    val totalSec = ms / 1000
+    val h = totalSec / 3600
+    val m = (totalSec % 3600) / 60
+    val s = totalSec % 60
+    return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%02d:%02d".format(m, s)
 }
 
 // ────────────────────────────────────────────────────────────────────

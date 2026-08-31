@@ -1,8 +1,8 @@
 # 🎬 YPDlp — High-Performance YouTube Downloader & Media Suite
 
-[![GitHub Release](https://img.shields.io/badge/📦_Latest_Release-v1.0.11-success?style=for-the-badge&logo=github)](https://github.com/AbhijeetArjeet/yt_downloader/releases/tag/v1.0.11)
-[![Android](https://img.shields.io/badge/Android-APK_v1.0.11-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.11/YPDlp_Android_v1.0.11.apk)
-[![Windows](https://img.shields.io/badge/Windows-Desktop_x64-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.11/YPDlp_Windows_x64.zip)
+[![GitHub Release](https://img.shields.io/badge/📦_Latest_Release-v1.0.12-success?style=for-the-badge&logo=github)](https://github.com/AbhijeetArjeet/yt_downloader/releases/tag/v1.0.12)
+[![Android](https://img.shields.io/badge/Android-APK_v1.0.12-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.12/YPDlp_Android_v1.0.12.apk)
+[![Windows](https://img.shields.io/badge/Windows-Desktop_x64-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.12/YPDlp_Windows_x64.zip)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
 **YPDlp** is a 100% standalone, zero-telemetry, on-device YouTube downloader and offline media suite engineered for **Windows Desktop** and **Android**. It merges high-bitrate video/audio streams on-device without relying on external servers.
@@ -13,8 +13,8 @@
 
 | Platform | Format | Package Link |
 |:---|:---|:---|
-| 📱 **Android** | APK (Universal) | [📥 **Download YPDlp_Android_v1.0.11.apk**](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.11/YPDlp_Android_v1.0.11.apk) |
-| 🖥️ **Windows (x64)** | Portable ZIP | [📥 **Download YPDlp_Windows_x64.zip**](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.11/YPDlp_Windows_x64.zip) |
+| 📱 **Android** | APK (Universal) | [📥 **Download YPDlp_Android_v1.0.12.apk**](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.12/YPDlp_Android_v1.0.12.apk) |
+| 🖥️ **Windows (x64)** | Portable ZIP | [📥 **Download YPDlp_Windows_x64.zip**](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.12/YPDlp_Windows_x64.zip) |
 | 📦 **All Releases** | Changelogs & Assets | [📂 **GitHub Releases Page**](https://github.com/AbhijeetArjeet/yt_downloader/releases) |
 
 ---
@@ -22,6 +22,7 @@
 ## 📱 Android App Features (Liquid Crystal Edition)
 
 - 💎 **Liquid Crystal Glass UI:** iOS-inspired translucent frosted glass, glowing neon accents, and smooth physics.
+- 📺 **In-App Fullscreen Video Player:** Watch downloaded videos directly inside the app with timeline scrubbing, fast-forward/rewind (+/- 10s), auto-hiding controls, and aspect ratio controls.
 - ⚡ **100% On-Device Standalone Engine:** Powered by embedded **Python 3.11** (`io.github.junkfood02.youtubedl-android:0.18.1`) + **FFmpeg**.
 - 🧩 **QuickJS JavaScript Engine (`libqjs.so`):** Native challenge solver to bypass YouTube's throttling & player signature changes.
 - 🎬 **True High-Res Extraction:** Download **4K (2160p)**, **2K (1440p)**, **1080p**, **720p**, and audio formats (**MP3, M4A, FLAC, OPUS, WAV**).
