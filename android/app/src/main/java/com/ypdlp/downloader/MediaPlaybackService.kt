@@ -7,6 +7,8 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.net.Uri
@@ -37,7 +39,15 @@ class MediaPlaybackService : Service() {
         const val ACTION_PAUSE = "com.ypdlp.ACTION_PAUSE"
         const val ACTION_TOGGLE = "com.ypdlp.ACTION_TOGGLE"
         const val ACTION_STOP = "com.ypdlp.ACTION_STOP"
+        const val ACTION_NEXT = "com.ypdlp.ACTION_NEXT"
+        const val ACTION_PREV = "com.ypdlp.ACTION_PREV"
         const val EXTRA_FILE_PATH = "extra_file_path"
+
+        private var activeQueue: List<DownloadedFile> = emptyList()
+
+        fun setPlaybackQueue(queue: List<DownloadedFile>) {
+            activeQueue = queue
+        }
 
         private val _playerState = MutableStateFlow(PlayerState())
         val playerState = _playerState.asStateFlow()
@@ -63,12 +73,16 @@ class MediaPlaybackService : Service() {
         createNotificationChannel()
         auraEngine = AuraPlaybackEngine(applicationContext)
 
+        auraEngine?.onSongFinished = {
+            playNext()
+        }
+
         // Observe playback state & visualizer data
         scope.launch {
             auraEngine!!.isPlaying.collect { playing ->
                 _playerState.update { it.copy(isPlaying = playing) }
                 _playerState.value.currentFile?.let { file ->
-                    updateNotification(file.title, playing)
+                    updateNotification(file, playing)
                 }
             }
         }
@@ -104,9 +118,29 @@ class MediaPlaybackService : Service() {
             }
             ACTION_PAUSE -> pause()
             ACTION_TOGGLE -> togglePlayPause()
+            ACTION_NEXT -> playNext()
+            ACTION_PREV -> playPrevious()
             ACTION_STOP -> stopPlayback()
         }
         return START_NOT_STICKY
+    }
+
+    fun playNext() {
+        val cur = _playerState.value.currentFile ?: return
+        if (activeQueue.isEmpty()) return
+        val idx = activeQueue.indexOfFirst { it.path == cur.path }
+        val next = if (idx in 0 until activeQueue.size - 1) activeQueue[idx + 1] else activeQueue.first()
+        updateCurrentMediaFile(next)
+        playFile(next.path)
+    }
+
+    fun playPrevious() {
+        val cur = _playerState.value.currentFile ?: return
+        if (activeQueue.isEmpty()) return
+        val idx = activeQueue.indexOfFirst { it.path == cur.path }
+        val prev = if (idx > 0) activeQueue[idx - 1] else activeQueue.last()
+        updateCurrentMediaFile(prev)
+        playFile(prev.path)
     }
 
     fun playFile(filePath: String) {
@@ -142,7 +176,7 @@ class MediaPlaybackService : Service() {
 
         auraEngine?.playFile(downloadedFile)
         try {
-            startForeground(NOTIFICATION_ID, buildNotification(downloadedFile.title, isPlaying = true))
+            startForeground(NOTIFICATION_ID, buildNotification(downloadedFile, isPlaying = true))
         } catch (e: Exception) {
             // Foreground service start exception on modern Android without permission
         }
@@ -166,7 +200,14 @@ class MediaPlaybackService : Service() {
 
     fun stopPlayback() {
         auraEngine?.release()
-        _playerState.update { PlayerState() }
+        _playerState.update {
+            it.copy(
+                currentFile = null,
+                isPlaying = false,
+                currentPositionMs = 0L,
+                durationMs = 0L
+            )
+        }
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
@@ -185,7 +226,7 @@ class MediaPlaybackService : Service() {
         }
     }
 
-    private fun buildNotification(title: String, isPlaying: Boolean): Notification {
+    private fun buildNotification(file: DownloadedFile, isPlaying: Boolean): Notification {
         val openIntent = PendingIntent.getActivity(
             this,
             0,
@@ -193,38 +234,67 @@ class MediaPlaybackService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        val toggleIntent = PendingIntent.getService(
+        val prevIntent = PendingIntent.getService(
             this,
             1,
+            Intent(this, MediaPlaybackService::class.java).apply { action = ACTION_PREV },
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val toggleIntent = PendingIntent.getService(
+            this,
+            2,
             Intent(this, MediaPlaybackService::class.java).apply { action = ACTION_TOGGLE },
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val nextIntent = PendingIntent.getService(
+            this,
+            3,
+            Intent(this, MediaPlaybackService::class.java).apply { action = ACTION_NEXT },
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
         val stopIntent = PendingIntent.getService(
             this,
-            2,
+            4,
             Intent(this, MediaPlaybackService::class.java).apply { action = ACTION_STOP },
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle(title)
-            .setContentText(if (isPlaying) "Playing in Background" else "Paused")
+        val artBitmap: Bitmap? = file.artworkByteArray?.let { bytes ->
+            try {
+                BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+            } catch (e: Exception) {
+                null
+            }
+        }
+
+        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle(file.title)
+            .setContentText(if (file.artist.isNotBlank() && file.artist != "Unknown Artist") file.artist else "AURA Player")
             .setSmallIcon(android.R.drawable.ic_media_play)
             .setContentIntent(openIntent)
             .setOngoing(isPlaying)
+            .addAction(android.R.drawable.ic_media_previous, "Previous", prevIntent)
             .addAction(
                 if (isPlaying) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play,
                 if (isPlaying) "Pause" else "Play",
                 toggleIntent
             )
+            .addAction(android.R.drawable.ic_media_next, "Next", nextIntent)
             .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Close", stopIntent)
-            .build()
+
+        if (artBitmap != null) {
+            builder.setLargeIcon(artBitmap)
+        }
+
+        return builder.build()
     }
 
-    private fun updateNotification(title: String, isPlaying: Boolean) {
+    private fun updateNotification(file: DownloadedFile, isPlaying: Boolean) {
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        nm.notify(NOTIFICATION_ID, buildNotification(title, isPlaying))
+        nm.notify(NOTIFICATION_ID, buildNotification(file, isPlaying))
     }
 
     override fun onDestroy() {
