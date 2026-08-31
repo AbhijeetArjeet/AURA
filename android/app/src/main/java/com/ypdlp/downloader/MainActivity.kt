@@ -241,7 +241,8 @@ fun YPDlpApp(
                             onWatchVideo = { file ->
                                 vm.stopPlayback()
                                 activeVideoFile = file
-                            }
+                            },
+                            onOpenNowPlaying = { showNowPlayingScreen = true }
                         )
                         4 -> HachimanConsoleTab(ui = ui, vm = vm)
                     }
@@ -1112,7 +1113,8 @@ fun QueueCardItem(item: DownloadItem, onCancel: () -> Unit) {
 fun LibraryTab(
     ui: UiState,
     vm: MainViewModel,
-    onWatchVideo: (DownloadedFile) -> Unit
+    onWatchVideo: (DownloadedFile) -> Unit,
+    onOpenNowPlaying: () -> Unit = {}
 ) {
     val context = LocalContext.current
 
@@ -1188,6 +1190,7 @@ fun LibraryTab(
                                 onWatchVideo(file)
                             } else {
                                 vm.playMediaFile(file)
+                                onOpenNowPlaying()
                             }
                         },
                         onWatchInApp = {
@@ -1195,6 +1198,7 @@ fun LibraryTab(
                         },
                         onPlayAudio = {
                             vm.playMediaFile(file)
+                            onOpenNowPlaying()
                         },
                         onOpenExternal = {
                             openWithExternalPlayer(context, file.file)

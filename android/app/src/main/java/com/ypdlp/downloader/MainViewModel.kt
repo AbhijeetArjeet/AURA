@@ -54,13 +54,18 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val prefs: SharedPreferences =
         app.getSharedPreferences("ypdlp_prefs", Context.MODE_PRIVATE)
 
+    private fun getSavedCustomFolders(): Set<String> {
+        val raw = prefs.getString("aura_custom_folders_str", "") ?: ""
+        return if (raw.isBlank()) emptySet() else raw.split("|||").filter { it.isNotBlank() }.toSet()
+    }
+
     private val _ui = MutableStateFlow(
         UiState(
             serverUrl = prefs.getString("server_url", "") ?: "",
             isHachimanMode = prefs.getBoolean("hachiman_mode", false),
             isOtakuMode = prefs.getBoolean("otaku_mode", false),
             favorites = prefs.getStringSet("aura_favorites", emptySet()) ?: emptySet(),
-            customMusicFolders = prefs.getStringSet("aura_custom_folders", emptySet()) ?: emptySet()
+            customMusicFolders = getSavedCustomFolders()
         )
     )
     val ui = _ui.asStateFlow()
@@ -338,7 +343,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun addCustomMusicFolder(folderPath: String) {
         val updated = _ui.value.customMusicFolders.toMutableSet()
         updated.add(folderPath)
-        prefs.edit().putStringSet("aura_custom_folders", updated).apply()
+        prefs.edit().putString("aura_custom_folders_str", updated.joinToString("|||")).apply()
         _ui.update { it.copy(customMusicFolders = updated) }
         loadDownloadedFiles()
     }
@@ -346,7 +351,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun removeCustomMusicFolder(folderPath: String) {
         val updated = _ui.value.customMusicFolders.toMutableSet()
         updated.remove(folderPath)
-        prefs.edit().putStringSet("aura_custom_folders", updated).apply()
+        prefs.edit().putString("aura_custom_folders_str", updated.joinToString("|||")).apply()
         _ui.update { it.copy(customMusicFolders = updated) }
         loadDownloadedFiles()
     }

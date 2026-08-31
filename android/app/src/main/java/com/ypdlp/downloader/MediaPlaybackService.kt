@@ -107,19 +107,23 @@ class MediaPlaybackService : Service() {
     }
 
     fun playFile(filePath: String) {
+        val isUri = filePath.startsWith("content://")
         val file = File(filePath)
-        if (!file.exists()) return
+        if (!isUri && !file.exists()) return
+
+        val fileName = if (isUri) filePath.substringAfterLast('%').substringAfterLast('/') else file.name
+        val cleanTitle = if (isUri) filePath.substringAfterLast('/').replace("_", " ") else file.nameWithoutExtension.replace("_", " ")
 
         val downloadedFile = DownloadedFile(
             file = file,
-            name = file.name,
-            title = file.nameWithoutExtension.replace("_", " "),
-            sizeBytes = file.length(),
-            sizeFormatted = "%.1f MB".format(file.length() / (1024.0 * 1024.0)),
-            isVideo = file.extension.lowercase() in listOf("mp4", "mkv", "webm", "avi"),
-            path = file.absolutePath,
-            lastModified = file.lastModified(),
-            extension = file.extension.uppercase()
+            name = fileName,
+            title = cleanTitle,
+            sizeBytes = if (isUri) 0L else file.length(),
+            sizeFormatted = "",
+            isVideo = filePath.lowercase().endsWith(".mp4") || filePath.lowercase().endsWith(".mkv"),
+            path = filePath,
+            lastModified = System.currentTimeMillis(),
+            extension = filePath.substringAfterLast('.', "AUDIO").uppercase()
         )
 
         _playerState.update {
@@ -130,7 +134,11 @@ class MediaPlaybackService : Service() {
         }
 
         auraEngine?.playFile(downloadedFile)
-        startForeground(NOTIFICATION_ID, buildNotification(downloadedFile.title, isPlaying = true))
+        try {
+            startForeground(NOTIFICATION_ID, buildNotification(downloadedFile.title, isPlaying = true))
+        } catch (e: Exception) {
+            // Foreground service start exception on modern Android without permission
+        }
     }
 
     fun pause() {

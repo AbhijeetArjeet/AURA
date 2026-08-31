@@ -30,13 +30,19 @@ object LibraryScanner {
         val appDir = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "YPDlp")
         scanFolder(appDir, results)
 
-        // 2. Specific Public Downloads/YPDlp directory ONLY (not entire Downloads)
+        // 2. Specific Public Downloads/YPDlp directory
         val publicYpdlp = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "YPDlp")
         if (publicYpdlp.exists() && publicYpdlp.canRead()) {
             scanFolder(publicYpdlp, results)
         }
 
-        // 3. User-Selected Custom Folders ONLY (Never blind system scans)
+        // 3. Standard Public Music Directory
+        val publicMusic = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
+        if (publicMusic.exists() && publicMusic.canRead()) {
+            scanFolder(publicMusic, results)
+        }
+
+        // 4. User-Selected Custom Folders ONLY (Never blind system scans)
         for (customPath in customFolderPaths) {
             try {
                 if (customPath.startsWith("content://")) {
@@ -56,12 +62,11 @@ object LibraryScanner {
             }
         }
 
-        // Deduplicate by canonical path, filter out non-music voice notes under 15s with no metadata, sort newest first
+        // Deduplicate by canonical path, filter out non-music voice notes / call directories, sort newest first
         results.distinctBy { it.path }
             .filter { file ->
                 val lowerPath = file.path.lowercase()
-                val isCallOrVoice = IGNORED_DIRECTORY_KEYWORDS.any { lowerPath.contains(it) }
-                !isCallOrVoice && (file.durationSeconds >= 15 || file.sizeBytes > 500 * 1024)
+                !IGNORED_DIRECTORY_KEYWORDS.any { lowerPath.contains(it) }
             }
             .sortedByDescending { it.lastModified }
     }
