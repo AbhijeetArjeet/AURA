@@ -18,26 +18,25 @@ object LibraryScanner {
     private val AUDIO_EXTENSIONS = setOf("mp3", "m4a", "flac", "wav", "ogg", "opus", "aac")
     private val VIDEO_EXTENSIONS = setOf("mp4", "mkv", "webm", "avi")
 
+    private val IGNORED_DIRECTORY_KEYWORDS = setOf(
+        "record", "recording", "voice", "call", "whatsapp", "telegram",
+        "audio_record", "sound_recorder", "callrecord", "voicenote", "notifications", "ringtones", "alarms"
+    )
+
     suspend fun scanLocalMedia(context: Context, customFolderPaths: Set<String> = emptySet()): List<DownloadedFile> = withContext(Dispatchers.IO) {
         val results = mutableListOf<DownloadedFile>()
 
-        // 1. App YPDlp Download directory
+        // 1. App YPDlp Download directory (for on-device downloads)
         val appDir = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "YPDlp")
         scanFolder(appDir, results)
 
-        // 2. Standard Public Music Directory
-        val publicMusic = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
-        if (publicMusic.exists() && publicMusic.canRead()) {
-            scanFolder(publicMusic, results)
+        // 2. Specific Public Downloads/YPDlp directory ONLY (not entire Downloads)
+        val publicYpdlp = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "YPDlp")
+        if (publicYpdlp.exists() && publicYpdlp.canRead()) {
+            scanFolder(publicYpdlp, results)
         }
 
-        // 3. Public Downloads directory & Downloads/YPDlp
-        val publicDownloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-        if (publicDownloads.exists() && publicDownloads.canRead()) {
-            scanFolder(publicDownloads, results)
-        }
-
-        // 4. Custom User-Selected Folders (URI strings and absolute paths)
+        // 3. User-Selected Custom Folders ONLY (Never blind system scans)
         for (customPath in customFolderPaths) {
             try {
                 if (customPath.startsWith("content://")) {
@@ -57,8 +56,14 @@ object LibraryScanner {
             }
         }
 
-        // Deduplicate by canonical path & sort newest first
-        results.distinctBy { it.path }.sortedByDescending { it.lastModified }
+        // Deduplicate by canonical path, filter out non-music voice notes under 15s with no metadata, sort newest first
+        results.distinctBy { it.path }
+            .filter { file ->
+                val lowerPath = file.path.lowercase()
+                val isCallOrVoice = IGNORED_DIRECTORY_KEYWORDS.any { lowerPath.contains(it) }
+                !isCallOrVoice && (file.durationSeconds >= 15 || file.sizeBytes > 500 * 1024)
+            }
+            .sortedByDescending { it.lastModified }
     }
 
     private fun scanDocumentFolder(context: Context, dir: DocumentFile, results: MutableList<DownloadedFile>) {
