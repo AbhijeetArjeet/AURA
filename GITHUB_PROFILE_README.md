@@ -2,15 +2,18 @@
 
   <!-- Typing SVG Banner -->
   <a href="https://github.com/AbhijeetArjeet">
-    <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=28&duration=3000&pause=1000&color=38BDF8&center=true&vCenter=true&width=620&height=70&lines=Hi+there%2C+I'm+Abhijeet+Arjeet+%F0%9F%91%8B;Full-Stack+%26+Mobile+Software+Engineer;Creator+of+YPDlp+%26+Open-Source+Tools;Crafting+Fast%2C+Clean+%26+On-Device+Apps" alt="Typing SVG" />
+    <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=26&duration=3000&pause=1000&color=38BDF8&center=true&vCenter=true&width=650&height=70&lines=Hi+there%2C+I'm+Abhijeet+Arjeet+%F0%9F%91%8B;AI-Augmented+Software+Engineer;Creator+of+YPDlp+%26+Open-Source+Tools;Leveraging+AI+to+Ship+High-Performance+Apps" alt="Typing SVG" />
   </a>
 
   <p align="center">
-    🚀 <em>Passionate Developer crafting high-performance desktop apps, mobile utilities, and developer tooling.</em>
+    🚀 <em>AI-Augmented Developer building high-performance desktop apps, mobile utilities, and developer tooling.</em>
   </p>
 
   <!-- Social & Profile Badges -->
   <p align="center">
+    <a href="https://github.com/AbhijeetArjeet">
+      <img src="https://img.shields.io/badge/🤖_AI--Augmented-Engineer-8B5CF6?style=for-the-badge&logo=google&logoColor=white" alt="AI Augmented" />
+    </a>
     <a href="https://github.com/AbhijeetArjeet?tab=repositories">
       <img src="https://img.shields.io/badge/📦_Repositories-25+-blue?style=for-the-badge&logo=github&logoColor=white&color=2563EB" alt="Repositories" />
     </a>
@@ -31,9 +34,10 @@
 ```yaml
 name: Abhijeet Arjeet
 status: 🛠️ Building next-gen standalone apps & high-performance tools
+workflow: 🤖 AI-Augmented Development (Pair-programming with modern AI & LLM tooling)
 focus: [Android / Kotlin, Python Desktop, TypeScript / Web, Systems & Tooling]
-philosophy: "Zero bloat, maximum performance, privacy-first on-device architecture."
-interests: [Mobile Architecture, Reverse Engineering, Media Processing, Automation]
+philosophy: "Leveraging modern AI to build zero-bloat, privacy-first, on-device software."
+interests: [AI-Assisted Engineering, Mobile Architecture, Reverse Engineering, Media Processing]
 ```
 
 ---
