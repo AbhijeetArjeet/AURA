@@ -106,7 +106,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 // If on-device standalone engine is ready and no custom server is specified:
-                if (YPDlpApp.isStandaloneEngineReady && _ui.value.serverUrl.isBlank()) {
+                val isReady = YPDlpApp.ensureInitialized(getApplication())
+                if (isReady && _ui.value.serverUrl.isBlank()) {
                     val req = YoutubeDLRequest(url).apply {
                         addOption("--no-check-certificates")
                         addOption("--extractor-args", "youtube:player_client=android,ios")

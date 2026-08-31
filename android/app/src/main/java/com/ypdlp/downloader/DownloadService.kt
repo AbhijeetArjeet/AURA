@@ -114,6 +114,10 @@ class DownloadService : Service() {
     private suspend fun runOnDeviceDownload(req: DownloadRequest, item: DownloadItem, outDir: File): Boolean = withContext(Dispatchers.IO) {
         try {
             updateItem(item.id) { it.copy(speed = "Starting on-device…", eta = "") }
+            val isInit = YPDlpApp.ensureInitialized(applicationContext)
+            if (!isInit) {
+                throw IllegalStateException("Failed to initialize on-device YoutubeDL engine")
+            }
 
             val isAudio = req.container.uppercase() in listOf("MP3", "M4A", "FLAC", "WAV", "OGG", "OPUS")
             val qualityMap = mapOf(
