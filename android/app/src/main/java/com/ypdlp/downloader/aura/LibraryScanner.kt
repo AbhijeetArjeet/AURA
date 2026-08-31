@@ -91,6 +91,24 @@ object LibraryScanner {
         }
     }
 
+    private fun fixMojibake(text: String): String {
+        if (text.isBlank()) return text
+        if (text.count { it == '?' } > 2) {
+            // Attempt conversion from ISO-8859-1 or Shift-JIS if corrupted into ?
+            try {
+                val bytes = text.toByteArray(Charsets.ISO_8859_1)
+                val utf8 = String(bytes, Charsets.UTF_8)
+                if (!utf8.contains("?") && utf8.any { it.code > 127 }) return utf8
+            } catch (e: Exception) {}
+            try {
+                val bytes = text.toByteArray(Charsets.ISO_8859_1)
+                val sjis = String(bytes, java.nio.charset.Charset.forName("Shift_JIS"))
+                if (!sjis.contains("?") && sjis.any { it.code > 127 }) return sjis
+            } catch (e: Exception) {}
+        }
+        return text
+    }
+
     private fun parseDocumentMetadata(context: Context, doc: DocumentFile, isVideo: Boolean): DownloadedFile? {
         val rawName = doc.name ?: return null
         val decodedName = try {
@@ -121,9 +139,18 @@ object LibraryScanner {
             val metaAlbum = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM)
             val metaDur = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
 
-            if (!metaTitle.isNullOrBlank()) cleanTitle = metaTitle.trim()
-            if (!metaArtist.isNullOrBlank()) artist = metaArtist.trim()
-            if (!metaAlbum.isNullOrBlank()) album = metaAlbum.trim()
+            if (!metaTitle.isNullOrBlank()) {
+                val fixed = fixMojibake(metaTitle.trim())
+                if (!fixed.contains("???")) cleanTitle = fixed
+            }
+            if (!metaArtist.isNullOrBlank()) {
+                val fixed = fixMojibake(metaArtist.trim())
+                if (!fixed.contains("???")) artist = fixed
+            }
+            if (!metaAlbum.isNullOrBlank()) {
+                val fixed = fixMojibake(metaAlbum.trim())
+                if (!fixed.contains("???")) album = fixed
+            }
             if (!metaDur.isNullOrBlank()) durationSecs = (metaDur.toLongOrNull() ?: 0L) / 1000L
             embeddedArt = retriever.embeddedPicture
 
@@ -132,6 +159,19 @@ object LibraryScanner {
             if (cleanTitle.contains(" - ")) {
                 val parts = cleanTitle.split(" - ")
                 if (parts.size >= 2) artist = parts[0].trim()
+            }
+        }
+
+        // Fallback: If title or artist is corrupted with '????', extract from filename or directory
+        if (cleanTitle.contains("???") || cleanTitle == "??") {
+            cleanTitle = decodedName.substringBeforeLast('.').replace("_", " ").trim()
+        }
+        if (artist.contains("???") || artist == "??") {
+            if (cleanTitle.contains(" - ")) {
+                val parts = cleanTitle.split(" - ")
+                if (parts.size >= 2) artist = parts[0].trim()
+            } else {
+                artist = "Local Artist"
             }
         }
 

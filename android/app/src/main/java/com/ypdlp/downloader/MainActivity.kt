@@ -131,8 +131,14 @@ fun YPDlpApp(
     var logoTapCount by remember { mutableIntStateOf(0) }
     var lastLogoTapTime by remember { mutableLongStateOf(0L) }
 
+    var isDownloaderUnlocked by remember { mutableStateOf(false) }
+    var libraryTapCount by remember { mutableIntStateOf(0) }
+    var lastLibraryTapTime by remember { mutableLongStateOf(0L) }
+
     LaunchedEffect(prefilledUrl) {
         prefilledUrl?.let {
+            isDownloaderUnlocked = true
+            selectedTab = 2
             vm.onUrlChange(it)
             vm.fetchInfo()
         }
@@ -196,15 +202,38 @@ fun YPDlpApp(
                         }
                     }
 
-                    // iOS Glass Capsule Bottom Navigation (with 8MAN Console tab if active)
+                    // iOS Glass Capsule Bottom Navigation (with hidden Download tab unlocked via 5 taps)
                     GlassBottomNav(
                         selected = selectedTab,
-                        onSelect = { selectedTab = it },
+                        onSelect = { tab ->
+                            if (tab == 3) { // Library Tab
+                                val now = System.currentTimeMillis()
+                                if (now - lastLibraryTapTime > 2500) {
+                                    libraryTapCount = 1
+                                } else {
+                                    libraryTapCount++
+                                }
+                                lastLibraryTapTime = now
+
+                                if (libraryTapCount >= 5) {
+                                    libraryTapCount = 0
+                                    isDownloaderUnlocked = !isDownloaderUnlocked
+                                    if (isDownloaderUnlocked) {
+                                        Toast.makeText(context, "🔓 Downloader Tab Unlocked!", Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        Toast.makeText(context, "🔒 Downloader Tab Hidden", Toast.LENGTH_SHORT).show()
+                                        if (selectedTab == 2) selectedTab = 0
+                                    }
+                                }
+                            }
+                            selectedTab = tab
+                        },
                         queueBadgeCount = queue.count {
                             it.status == DownloadStatus.DOWNLOADING || it.status == DownloadStatus.QUEUED
                         },
                         downloadsCount = ui.downloadedFiles.size,
-                        isHachimanMode = ui.isHachimanMode
+                        isHachimanMode = ui.isHachimanMode,
+                        showDownloaderTab = isDownloaderUnlocked
                     )
                 }
             }
@@ -368,7 +397,8 @@ fun GlassBottomNav(
     onSelect: (Int) -> Unit,
     queueBadgeCount: Int,
     downloadsCount: Int,
-    isHachimanMode: Boolean = false
+    isHachimanMode: Boolean = false,
+    showDownloaderTab: Boolean = false
 ) {
     val activeGrad = if (isHachimanMode) HachimanGradient else RedGradient
 
@@ -407,13 +437,15 @@ fun GlassBottomNav(
                     activeGradient = Brush.horizontalGradient(listOf(Color(0xFFFF2A55), Color(0xFFFF6B2B))),
                     onClick = { onSelect(1) }
                 )
-                NavCapsuleItem(
-                    selected = selected == 2,
-                    icon = Icons.Filled.Download,
-                    label = "Get",
-                    activeGradient = activeGrad,
-                    onClick = { onSelect(2) }
-                )
+                if (showDownloaderTab) {
+                    NavCapsuleItem(
+                        selected = selected == 2,
+                        icon = Icons.Filled.Download,
+                        label = "Get",
+                        activeGradient = activeGrad,
+                        onClick = { onSelect(2) }
+                    )
+                }
                 NavCapsuleItem(
                     selected = selected == 3,
                     icon = Icons.Filled.VideoLibrary,
