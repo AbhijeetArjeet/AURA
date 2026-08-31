@@ -36,6 +36,7 @@ android/app/build/
 android/local.properties
 *.apk
 *.aab
+*.zip
 
 # FFmpeg binaries
 ffmpeg/

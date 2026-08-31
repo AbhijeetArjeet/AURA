@@ -123,7 +123,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                     val durationSecs = (ytdlInfo.duration?.toLong()) ?: 0L
                     val viewCountLong = (ytdlInfo.viewCount?.toLong()) ?: 0L
                     val videoInfo = VideoInfo(
-                        url = ytdlInfo.url ?: url,
+                        url = ytdlInfo.webpageUrl ?: url,
                         title = ytdlInfo.title ?: "Unknown Title",
                         channel = ytdlInfo.uploader ?: "",
                         durationSeconds = durationSecs,

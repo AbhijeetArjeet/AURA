@@ -1,8 +1,8 @@
 # 🎬 YPDlp — High-Performance YouTube Downloader & Media Suite
 
-[![GitHub Release](https://img.shields.io/badge/📦_Latest_Release-v1.0.12-success?style=for-the-badge&logo=github)](https://github.com/AbhijeetArjeet/yt_downloader/releases/tag/v1.0.12)
-[![Android](https://img.shields.io/badge/Android-APK_v1.0.12-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.12/YPDlp_Android_v1.0.12.apk)
-[![Windows](https://img.shields.io/badge/Windows-Desktop_x64-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.12/YPDlp_Windows_x64.zip)
+[![GitHub Release](https://img.shields.io/badge/📦_Latest_Release-v1.0.13-success?style=for-the-badge&logo=github)](https://github.com/AbhijeetArjeet/yt_downloader/releases/tag/v1.0.13)
+[![Android](https://img.shields.io/badge/Android-APK_v1.0.13-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.13/YPDlp_Android_v1.0.13.apk)
+[![Windows](https://img.shields.io/badge/Windows-Desktop_x64-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.13/YPDlp_Windows_x64.zip)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
 **YPDlp** is a 100% standalone, zero-telemetry, on-device YouTube downloader and offline media suite engineered for **Windows Desktop** and **Android**. It merges high-bitrate video/audio streams on-device without relying on external servers.
@@ -13,8 +13,8 @@
 
 | Platform | Format | Package Link |
 |:---|:---|:---|
-| 📱 **Android** | APK (Universal) | [📥 **Download YPDlp_Android_v1.0.12.apk**](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.12/YPDlp_Android_v1.0.12.apk) |
-| 🖥️ **Windows (x64)** | Portable ZIP | [📥 **Download YPDlp_Windows_x64.zip**](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.12/YPDlp_Windows_x64.zip) |
+| 📱 **Android** | APK (Universal) | [📥 **Download YPDlp_Android_v1.0.13.apk**](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.13/YPDlp_Android_v1.0.13.apk) |
+| 🖥️ **Windows (x64)** | Portable ZIP | [📥 **Download YPDlp_Windows_x64.zip**](https://github.com/AbhijeetArjeet/yt_downloader/releases/download/v1.0.13/YPDlp_Windows_x64.zip) |
 | 📦 **All Releases** | Changelogs & Assets | [📂 **GitHub Releases Page**](https://github.com/AbhijeetArjeet/yt_downloader/releases) |
 
 ---

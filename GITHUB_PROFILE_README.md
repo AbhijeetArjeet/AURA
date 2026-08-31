@@ -61,7 +61,7 @@ capabilities:
         <h3>🎬 YPDlp — On-Device Media Suite</h3>
         <p>
           <a href="https://github.com/AbhijeetArjeet/yt_downloader/releases">
-            <img src="https://img.shields.io/badge/Release-v1.0.12-10B981?style=flat-square&logo=github" />
+            <img src="https://img.shields.io/badge/Release-v1.0.13-10B981?style=flat-square&logo=github" />
             <img src="https://img.shields.io/badge/Android-APK-3DDC84?style=flat-square&logo=android&logoColor=white" />
             <img src="https://img.shields.io/badge/Windows-x64-0078D6?style=flat-square&logo=windows&logoColor=white" />
           </a>
@@ -267,7 +267,7 @@ capabilities:
     <img src="https://img.shields.io/badge/Explore_Projects-View_All-2563EB?style=for-the-badge&logo=git&logoColor=white" alt="Explore" />
   </a>
   <a href="https://github.com/AbhijeetArjeet/yt_downloader/releases">
-    <img src="https://img.shields.io/badge/Latest_Release-YPDlp_v1.0.12-10B981?style=for-the-badge&logo=android&logoColor=white" alt="YPDlp Release" />
+    <img src="https://img.shields.io/badge/Latest_Release-YPDlp_v1.0.13-10B981?style=for-the-badge&logo=android&logoColor=white" alt="YPDlp Release" />
   </a>
 
   <br /><br />

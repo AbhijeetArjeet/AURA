@@ -142,7 +142,7 @@
   <!-- Main Hero Title -->
   <g transform="translate(60, 150)">
     <text x="0" y="0" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="900" letter-spacing="2px" fill="url(#textGrad)" filter="url(#dropShadow)">ABHIJEET ARJEET</text>
-    <text x="500" y="-8" font-family="'Fira Code', monospace" font-size="16" font-weight="700" fill="#38BDF8">v1.0.12</text>
+    <text x="500" y="-8" font-family="'Fira Code', monospace" font-size="16" font-weight="700" fill="#38BDF8">v1.0.13</text>
   </g>
 
   <!-- Dynamic Sliding Roles with Terminal Cursor -->
