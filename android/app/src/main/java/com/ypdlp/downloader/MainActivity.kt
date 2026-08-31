@@ -308,6 +308,7 @@ fun YPDlpApp(
                 )
             ) {
                 com.ypdlp.downloader.aura.AuraWebPlayerScreen(
+                    vm = vm,
                     onClose = { showWebPlayer = false }
                 )
             }

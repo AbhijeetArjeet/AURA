@@ -261,6 +261,18 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         _ui.update { it.copy(serverUrl = clean) }
     }
 
+    fun quickDownload(url: String, title: String = "Web Track") {
+        val req = DownloadRequest(
+            id = UUID.randomUUID().toString(),
+            url = url,
+            container = "MP3",
+            quality = "Best",
+            outputDir = DownloadService.getDownloadDirectory(getApplication()).absolutePath,
+            serverUrl = _ui.value.serverUrl
+        )
+        downloadService?.enqueue(req, videoTitle = title, thumbnailUrl = "")
+    }
+
     // ── Queue ─────────────────────────────────────────────────────────────────
 
     fun addToQueue() {

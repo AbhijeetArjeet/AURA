@@ -28,8 +28,10 @@ import androidx.compose.ui.viewinterop.AndroidView
 @Composable
 fun AuraWebPlayerScreen(
     initialUrl: String = "https://music.youtube.com",
+    vm: com.ypdlp.downloader.MainViewModel? = null,
     onClose: () -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     var currentUrl by remember { mutableStateOf(initialUrl) }
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
     var isLoading by remember { mutableStateOf(true) }
@@ -197,6 +199,33 @@ fun AuraWebPlayerScreen(
                     webViewRef = it
                 }
             )
+        }
+
+        // ── Floating 1-Click Audio Download Button ──
+        FloatingActionButton(
+            onClick = {
+                val target = webViewRef?.url ?: currentUrl
+                if (vm != null && target.isNotBlank()) {
+                    vm.quickDownload(target, pageTitle)
+                    android.widget.Toast.makeText(context, "⚡ Downloading: $pageTitle", android.widget.Toast.LENGTH_SHORT).show()
+                } else {
+                    android.widget.Toast.makeText(context, "URL: $target", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(24.dp),
+            containerColor = Color(0xFFFF2A55),
+            contentColor = Color.White
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Filled.Download, contentDescription = "Download")
+                Spacer(Modifier.width(6.dp))
+                Text("Download", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+            }
         }
     }
 }
