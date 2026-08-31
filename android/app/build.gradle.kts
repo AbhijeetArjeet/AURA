@@ -10,11 +10,11 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.ypdlp.downloader"
+        applicationId = "com.aura.music"
         minSdk = 26
         targetSdk = 35
-        versionCode = 15
-        versionName = "1.1.0"
+        versionCode = 1
+        versionName = "1.0.0"
 
         ndk {
             abiFilters.addAll(setOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64"))

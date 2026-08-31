@@ -18,7 +18,7 @@
     <application
         android:name=".YPDlpApp"
         android:allowBackup="true"
-        android:label="YPDlp"
+        android:label="AURA"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:icon="@mipmap/ic_launcher"
         android:theme="@style/Theme.YPDlp"
