@@ -6,18 +6,20 @@ import sys
 datas = []
 binaries = []
 
-# Include imageio-ffmpeg binary if present
-try:
-    import imageio_ffmpeg
-    ff_exe = imageio_ffmpeg.get_ffmpeg_exe()
-    if ff_exe and os.path.isfile(ff_exe):
-        binaries.append((ff_exe, '.'))
-        binaries.append((ff_exe, 'bin'))
-except Exception as e:
-    print(f"Note: imageio_ffmpeg binary detection: {e}")
-
 # Include local bin/ffmpeg.exe if present
-local_ffmpeg = os.path.join(os.getcwd(), 'bin', 'ffmpeg.exe')
+spec_dir = os.path.dirname(os.path.abspath(SPEC)) if 'SPEC' in globals() else os.getcwd()
+local_ffmpeg = os.path.join(spec_dir, 'bin', 'ffmpeg.exe')
+if not os.path.isfile(local_ffmpeg):
+    try:
+        import imageio_ffmpeg
+        ff_exe = imageio_ffmpeg.get_ffmpeg_exe()
+        if ff_exe and os.path.isfile(ff_exe):
+            os.makedirs(os.path.join(spec_dir, 'bin'), exist_ok=True)
+            import shutil
+            shutil.copy2(ff_exe, local_ffmpeg)
+    except Exception:
+        pass
+
 if os.path.isfile(local_ffmpeg):
     binaries.append((local_ffmpeg, '.'))
     binaries.append((local_ffmpeg, 'bin'))
