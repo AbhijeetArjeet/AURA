@@ -14,6 +14,17 @@ if exist "C:\Program Files\Android\Android Studio\jbr\bin\java.exe" (
     echo [+] Using Android Studio JDK 21: %JAVA_HOME%
 )
 
+:: Automatically detect Android SDK if not set
+if not defined ANDROID_HOME (
+    if exist "%LOCALAPPDATA%\Android\platform-tools" (
+        set "ANDROID_HOME=%LOCALAPPDATA%\Android"
+        echo [+] Using Android SDK: %LOCALAPPDATA%\Android
+    ) else if exist "%LOCALAPPDATA%\Android\Sdk\platform-tools" (
+        set "ANDROID_HOME=%LOCALAPPDATA%\Android\Sdk"
+        echo [+] Using Android SDK: %LOCALAPPDATA%\Android\Sdk
+    )
+)
+
 :: Verify Java version
 java -version
 if %errorlevel% neq 0 (

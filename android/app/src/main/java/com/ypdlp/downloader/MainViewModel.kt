@@ -110,14 +110,15 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                     val req = YoutubeDLRequest(url)
                     val ytdlInfo = YoutubeDL.getInstance().getInfo(req)
 
-                    val durationSecs = ytdlInfo.duration.toLong()
+                    val durationSecs = (ytdlInfo.duration?.toLong()) ?: 0L
+                    val viewCountLong = (ytdlInfo.viewCount?.toLong()) ?: 0L
                     val videoInfo = VideoInfo(
                         url = ytdlInfo.url ?: url,
                         title = ytdlInfo.title ?: "Unknown Title",
                         channel = ytdlInfo.uploader ?: "",
                         durationSeconds = durationSecs,
                         thumbnailUrl = ytdlInfo.thumbnail ?: "",
-                        viewCount = ytdlInfo.viewCount ?: 0L
+                        viewCount = viewCountLong
                     )
 
                     _ui.update {

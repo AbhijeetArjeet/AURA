@@ -326,7 +326,10 @@ fun NavCapsuleItem(
 
     Box(
         modifier = Modifier
-            .scale(scale)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .clip(RoundedCornerShape(24.dp))
             .background(
                 if (selected) RedGradient else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent))
