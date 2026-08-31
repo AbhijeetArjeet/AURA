@@ -176,11 +176,26 @@ class DownloadWorker(QThread):
             },
         }
 
+        # Normalize quality key – accept variations like "1080p MP4" or "1080p" etc.
+        effective_quality = self.quality
+        # Try to find a matching key in QUALITY_MAP (case‑insensitive substring match)
+        lowered = effective_quality.lower()
+        matched_key = None
+        for k in QUALITY_MAP.keys():
+            if k.lower() in lowered:
+                matched_key = k
+                break
+        if matched_key:
+            effective_quality = matched_key
+        else:
+            # Fallback to original value (will use default if not found)
+            effective_quality = self.quality
+        
         # Resolve FFmpeg path using our robust detector
         ffmpeg_bin = ffmpeg_utils.get_ffmpeg_path(self.ffmpeg_location)
         if ffmpeg_bin and os.path.isfile(ffmpeg_bin):
             opts["ffmpeg_location"] = ffmpeg_bin
-
+        
         if is_audio:
             aq = AUDIO_QUALITIES.get(self.audio_quality, "0")
             opts["format"] = "bestaudio/best"
@@ -193,11 +208,11 @@ class DownloadWorker(QThread):
         else:
             ext = FORMAT_MAP.get(self.container, "mp4")
             if ffmpeg_bin:
-                fmt = QUALITY_MAP.get(self.quality, QUALITY_MAP["Best"])
+                fmt = QUALITY_MAP.get(effective_quality, QUALITY_MAP["Best"]) 
                 opts["format"] = fmt
                 opts["merge_output_format"] = ext
             else:
-                # Fallback format for single-stream if FFmpeg is completely missing
+                # Fallback format for single‑stream if FFmpeg is completely missing
                 opts["format"] = "best[ext=mp4]/best"
 
         return opts
