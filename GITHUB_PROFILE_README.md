@@ -150,23 +150,23 @@ interests: [Mobile Architecture, Reverse Engineering, Media Processing, Automati
       </p>
     </td>
     <td width="50%" valign="top">
-      <h3 align="center">🎮 Flappy Bird Canvas Arcade</h3>
+      <h3 align="center">📋 Attendance Management System</h3>
       <p align="center">
-        <a href="https://github.com/AbhijeetArjeet/flappy-bird-game">
-          <img src="https://img.shields.io/badge/Tech-HTML5%20Canvas-E34F26?style=flat-square&logo=html5&logoColor=white" />
-          <img src="https://img.shields.io/badge/Game-Arcade-red?style=flat-square" />
+        <a href="https://github.com/AbhijeetArjeet/attendance-system">
+          <img src="https://img.shields.io/badge/Stack-Node.js%20%2F%20Express-339933?style=flat-square&logo=nodedotjs&logoColor=white" />
+          <img src="https://img.shields.io/badge/Frontend-Vanilla%20JS%20%2F%20CSS-F7DF1E?style=flat-square&logo=javascript&logoColor=black" />
         </a>
       </p>
       <p>
-        <strong>Modern HTML5 Canvas arcade game</strong> with 60 FPS physics, audio effects, and local high-score tracking.
+        <strong>Full-Stack Attendance & Record Management Platform</strong> designed for fast classroom and session tracking.
       </p>
       <ul>
-        <li>🕹️ Smooth collision detection and score multiplier mechanics</li>
-        <li>⏯️ Pause/Resume state management & interactive UI</li>
-        <li>💾 LocalStorage persistent high-score leaderboards</li>
+        <li>📊 Real-time student attendance logging and status calculation</li>
+        <li>🔐 RESTful backend API for record persistence and analytics</li>
+        <li>📱 Responsive, clean user interface with instant query lookup</li>
       </ul>
       <p align="center">
-        <a href="https://github.com/AbhijeetArjeet/flappy-bird-game"><strong>🔗 View Repository →</strong></a>
+        <a href="https://github.com/AbhijeetArjeet/attendance-system"><strong>🔗 View Repository →</strong></a>
       </p>
     </td>
   </tr>
