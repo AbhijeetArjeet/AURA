@@ -107,7 +107,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             try {
                 // If on-device standalone engine is ready and no custom server is specified:
                 if (YPDlpApp.isStandaloneEngineReady && _ui.value.serverUrl.isBlank()) {
-                    val req = YoutubeDLRequest(url)
+                    val req = YoutubeDLRequest(url).apply {
+                        addOption("--no-check-certificates")
+                        addOption("--extractor-args", "youtube:player_client=android,ios")
+                        addOption("--add-header", "User-Agent:com.google.android.youtube/19.09.37 (Linux; U; Android 14) gzip")
+                    }
                     val ytdlInfo = YoutubeDL.getInstance().getInfo(req)
 
                     val durationSecs = (ytdlInfo.duration?.toLong()) ?: 0L

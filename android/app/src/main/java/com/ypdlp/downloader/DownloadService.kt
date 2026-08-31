@@ -32,12 +32,11 @@ class DownloadService : Service() {
         private const val TAG = "DownloadService"
 
         fun getDownloadDirectory(context: Context): File {
-            val publicDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-            val appDir = File(publicDir, "YPDlp")
+            val appDir = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "YPDlp")
             if (!appDir.exists()) {
                 appDir.mkdirs()
             }
-            return if (appDir.exists() && appDir.canWrite()) appDir else File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "YPDlp").apply { mkdirs() }
+            return appDir
         }
     }
 
@@ -97,18 +96,14 @@ class DownloadService : Service() {
     }
 
     private suspend fun runDownload(req: DownloadRequest, item: DownloadItem) {
-        updateItem(item.id) { it.copy(status = DownloadStatus.DOWNLOADING, progress = 0) }
+        updateItem(item.id) { it.copy(status = DownloadStatus.DOWNLOADING, progress = 0, errorMessage = "") }
         updateNotification("Downloading: ${item.videoInfo.title}")
 
         val outDir = getDownloadDirectory(applicationContext)
 
-        // If embedded on-device engine is ready, download 100% on-device
-        if (YPDlpApp.isStandaloneEngineReady && req.serverUrl.isBlank()) {
-            runOnDeviceDownload(req, item, outDir)
-        } else if (req.serverUrl.isNotBlank()) {
+        if (req.serverUrl.isNotBlank()) {
             runRemoteServerDownload(req, item, outDir)
         } else {
-            // Fallback to on-device attempt
             runOnDeviceDownload(req, item, outDir)
         }
     }
@@ -116,7 +111,7 @@ class DownloadService : Service() {
     /**
      * 100% On-Device Standalone Download (Embedded yt-dlp + embedded FFmpeg)
      */
-    private suspend fun runOnDeviceDownload(req: DownloadRequest, item: DownloadItem, outDir: File) = withContext(Dispatchers.IO) {
+    private suspend fun runOnDeviceDownload(req: DownloadRequest, item: DownloadItem, outDir: File): Boolean = withContext(Dispatchers.IO) {
         try {
             updateItem(item.id) { it.copy(speed = "Starting on-device…", eta = "") }
 
@@ -126,15 +121,19 @@ class DownloadService : Service() {
                 "4K (2160p)" to "bestvideo[height<=2160]+bestaudio/best[height<=2160]/bestvideo+bestaudio/best",
                 "2K (1440p)" to "bestvideo[height<=1440]+bestaudio/best[height<=1440]/bestvideo+bestaudio/best",
                 "1080p"      to "bestvideo[height<=1080]+bestaudio/best[height<=1080]/bestvideo+bestaudio/best",
-                "720p"       to "bestvideo[height<=720]+bestaudio/best[height<=720]/bestvideo+bestaudio/best",
-                "480p"       to "bestvideo[height<=480]+bestaudio/best[height<=480]/bestvideo+bestaudio/best",
-                "360p"       to "bestvideo[height<=360]+bestaudio/best[height<=360]/bestvideo+bestaudio/best",
+                "720p"       to "22/bestvideo[height<=720]+bestaudio/best[height<=720]/best",
+                "480p"       to "bestvideo[height<=480]+bestaudio/best[height<=480]/best",
+                "360p"       to "18/best[height<=360]/bestvideo[height<=360]+bestaudio/best",
             )
 
             val ytdlRequest = YoutubeDLRequest(req.url).apply {
                 addOption("-o", "${outDir.absolutePath}/%(title)s.%(ext)s")
                 addOption("--newline")
                 addOption("--no-mtime")
+                addOption("--no-check-certificates")
+                addOption("--prefer-free-formats")
+                addOption("--extractor-args", "youtube:player_client=android,ios")
+                addOption("--add-header", "User-Agent:com.google.android.youtube/19.09.37 (Linux; U; Android 14) gzip")
 
                 if (isAudio) {
                     addOption("-f", "bestaudio/best")
@@ -196,10 +195,11 @@ class DownloadService : Service() {
                 )
             }
             updateNotification("Downloaded: ${latestFile?.name ?: "Complete"}")
-
+            true
         } catch (e: CancellationException) {
             YoutubeDL.getInstance().destroyProcessById(req.id)
             updateItem(item.id) { it.copy(status = DownloadStatus.CANCELLED) }
+            false
         } catch (e: Exception) {
             Log.e(TAG, "On-device download error: ${e.message}", e)
             updateItem(item.id) {
@@ -209,8 +209,11 @@ class DownloadService : Service() {
                 )
             }
             updateNotification("Download Error: ${e.message?.take(30)}")
+            false
         } finally {
-            activeJobs.remove(req.id)
+            if (activeJobs[req.id]?.isCompleted == true) {
+                activeJobs.remove(req.id)
+            }
             if (activeJobs.isEmpty()) {
                 updateNotification("Downloads completed")
             }
@@ -268,10 +271,13 @@ class DownloadService : Service() {
                             }
                         }
                         "done" -> isFinished = true
-                        "error" -> throw Exception(statusJson.optString("error", "Server download failed"))
+                        "error" -> {
+                            val serverErr = statusJson.optString("error", "Server download failed")
+                            throw IllegalStateException(serverErr)
+                        }
                     }
                 } catch (e: Exception) {
-                    if (e is CancellationException) throw e
+                    if (e is CancellationException || e is IllegalStateException) throw e
                 }
             }
 

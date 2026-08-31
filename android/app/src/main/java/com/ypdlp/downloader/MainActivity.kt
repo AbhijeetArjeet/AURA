@@ -958,6 +958,14 @@ fun QueueCardItem(item: DownloadItem, onCancel: () -> Unit) {
                         Text("${item.progress}%", fontSize = 10.sp, color = TextMuted)
                         Text(item.speed, fontSize = 10.sp, color = LiquidCyan)
                     }
+                } else if (item.status == DownloadStatus.ERROR && item.errorMessage.isNotBlank()) {
+                    Text(
+                        "⚠️ ${item.errorMessage.take(120)}",
+                        fontSize = 11.sp,
+                        color = Color(0xFFFF5252),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
 

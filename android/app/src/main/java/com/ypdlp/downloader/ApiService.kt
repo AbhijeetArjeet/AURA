@@ -31,8 +31,8 @@ object ApiService {
         val url = URL(endpoint)
         val conn = (url.openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
-            connectTimeout = 15000
-            readTimeout = 25000
+            connectTimeout = 60000
+            readTimeout = 60000
             doOutput = true
             setRequestProperty("Content-Type", "application/json; charset=UTF-8")
             setRequestProperty("User-Agent", "YPDlp-Android/1.0")
@@ -90,8 +90,8 @@ object ApiService {
         val url = URL(endpoint)
         val conn = (url.openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
-            connectTimeout = 20000
-            readTimeout = 40000
+            connectTimeout = 60000
+            readTimeout = 60000
             doOutput = true
             setRequestProperty("Content-Type", "application/json; charset=UTF-8")
             setRequestProperty("User-Agent", "YPDlp-Android/1.0")
@@ -155,8 +155,8 @@ object ApiService {
 
         val conn = (URL(endpoint).openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
-            connectTimeout = 15000
-            readTimeout = 20000
+            connectTimeout = 60000
+            readTimeout = 60000
             doOutput = true
             setRequestProperty("Content-Type", "application/json; charset=UTF-8")
             setRequestProperty("User-Agent", "YPDlp-Android/1.0")
