@@ -28,6 +28,9 @@ data class UiState(
     val serverUrl: String = "", // Empty means 100% On-Device Standalone Engine
     val downloadedFiles: List<DownloadedFile> = emptyList(),
     val isScanningFiles: Boolean = false,
+    val isHachimanMode: Boolean = false,
+    val terminalInput: String = "",
+    val isRunningCommand: Boolean = false,
 )
 
 enum class DownloadType { VIDEO, AUDIO }
@@ -39,10 +42,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     private val _ui = MutableStateFlow(
         UiState(
-            serverUrl = prefs.getString("server_url", "") ?: ""
+            serverUrl = prefs.getString("server_url", "") ?: "",
+            isHachimanMode = prefs.getBoolean("hachiman_mode", false)
         )
     )
     val ui = _ui.asStateFlow()
+
+    val consoleLogs = AppLogger.logs
 
     private val _queue = MutableStateFlow<List<DownloadItem>>(emptyList())
     val queue = _queue.asStateFlow()
@@ -309,6 +315,168 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
         context.startService(intent)
     }
+
+    // ── 8MAN Dev Console & Maintenance ───────────────────────────────────────
+    val logs = AppLogger.logs
+
+    fun toggleHachimanMode(): Boolean {
+        val newMode = !_ui.value.isHachimanMode
+        prefs.edit().putBoolean("hachiman_mode", newMode).apply()
+        _ui.update { it.copy(isHachimanMode = newMode) }
+        if (newMode) {
+            AppLogger.i("8MAN", "★ 8MAN Mode Activated: 'Youth is a lie. It is evil.' — Hachiman Hikigaya")
+        } else {
+            AppLogger.i("Yukino", "❄ Yukino Mode Restored: 'Being hated is not a virtue.'")
+        }
+        return newMode
+    }
+
+    fun setTerminalInput(v: String) {
+        _ui.update { it.copy(terminalInput = v) }
+    }
+
+    fun clearConsoleLogs() {
+        AppLogger.clear()
+    }
+
+    fun executeTerminalCommand() {
+        val raw = _ui.value.terminalInput.trim()
+        if (raw.isBlank()) return
+        _ui.update { it.copy(isRunningCommand = true, terminalInput = "") }
+        AppLogger.cmd("Shell", raw)
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                when {
+                    raw.equals("clear", ignoreCase = true) || raw.equals("cls", ignoreCase = true) -> {
+                        AppLogger.clear()
+                    }
+                    raw.equals("help", ignoreCase = true) -> {
+                        AppLogger.i("Help", "=== 8MAN Console Shell Commands ===")
+                        AppLogger.i("Help", "  info <url>       - Query stream metadata on-device")
+                        AppLogger.i("Help", "  diag             - Print full system & storage diagnostic")
+                        AppLogger.i("Help", "  ping             - Test YouTube CDN latency & DNS")
+                        AppLogger.i("Help", "  reinit           - Force reload YoutubeDL & FFmpeg engine")
+                        AppLogger.i("Help", "  clearcache       - Clean temp, cache & part files")
+                        AppLogger.i("Help", "  clear / cls      - Clear console logs")
+                        AppLogger.i("Help", "  8man             - Print random cynical Hachiman quote")
+                    }
+                    raw.equals("diag", ignoreCase = true) -> {
+                        val report = AppLogger.getDiagnosticReport(getApplication())
+                        report.lines().forEach { line ->
+                            if (line.isNotBlank()) AppLogger.d("Diag", line)
+                        }
+                    }
+                    raw.equals("ping", ignoreCase = true) -> {
+                        pingYouTube()
+                    }
+                    raw.equals("reinit", ignoreCase = true) -> {
+                        forceReinitEngine()
+                    }
+                    raw.equals("clearcache", ignoreCase = true) -> {
+                        clearTempCache()
+                    }
+                    raw.equals("8man", ignoreCase = true) -> {
+                        val quotes = listOf(
+                            "Youth is a lie. It is evil. Those who glorify it are merely deluding themselves.",
+                            "I hate nice girls. A casual exchange of greetings sets my mind racing. A text message makes my heart flutter.",
+                            "There's no point in putting on an act to make someone like you. The real you will just suffer more later.",
+                            "If you can't be loved, at least be feared. But if you can't even be feared, just be alone and comfortable.",
+                            "I don't want something superficial. I want something genuine.",
+                            "Hard work betrays none, but it betrays plenty of dreams.",
+                            "Problem solved? No, problems aren't solved. They are just shoved onto someone else."
+                        )
+                        AppLogger.i("8MAN", "💬 ${quotes.random()}")
+                    }
+                    raw.startsWith("info ", ignoreCase = true) -> {
+                        val targetUrl = raw.removePrefix("info ").trim()
+                        AppLogger.i("yt-dlp", "Querying info for: $targetUrl")
+                        YPDlpApp.ensureInitialized(getApplication())
+                        val req = YoutubeDLRequest(targetUrl).apply {
+                            addOption("--no-check-certificates")
+                            addOption("--extractor-args", "youtube:player_client=android,ios")
+                        }
+                        val info = YoutubeDL.getInstance().getInfo(req)
+                        AppLogger.i("yt-dlp", "Title: ${info.title}")
+                        AppLogger.i("yt-dlp", "Uploader: ${info.uploader}")
+                        AppLogger.i("yt-dlp", "Duration: ${info.duration}s | Views: ${info.viewCount}")
+                    }
+                    else -> {
+                        AppLogger.i("yt-dlp", "Executing custom command: $raw")
+                        YPDlpApp.ensureInitialized(getApplication())
+                        val req = YoutubeDLRequest(raw)
+                        YoutubeDL.getInstance().execute(req, UUID.randomUUID().toString()) { _, _, line ->
+                            AppLogger.d("yt-dlp", line)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                AppLogger.e("Shell", "Execution failed: ${e.message}")
+            } finally {
+                _ui.update { it.copy(isRunningCommand = false) }
+            }
+        }
+    }
+
+    fun forceReinitEngine() {
+        viewModelScope.launch(Dispatchers.IO) {
+            AppLogger.i("Engine", "🔄 Forcing manual re-initialization of YoutubeDL & FFmpeg...")
+            try {
+                YoutubeDL.getInstance().init(getApplication())
+                try {
+                    com.yausername.ffmpeg.FFmpeg.getInstance().init(getApplication())
+                } catch (e: Exception) {}
+                AppLogger.i("Engine", "✔ On-device engine re-initialized successfully!")
+            } catch (e: Exception) {
+                AppLogger.e("Engine", "✘ Re-init error: ${e.message}")
+            }
+        }
+    }
+
+    fun clearTempCache() {
+        viewModelScope.launch(Dispatchers.IO) {
+            AppLogger.i("System", "🧹 Scanning and cleaning cache & temp files...")
+            var count = 0
+            var freedBytes = 0L
+            try {
+                val cacheDir = getApplication<Application>().cacheDir
+                cacheDir.listFiles()?.forEach { file ->
+                    freedBytes += file.length()
+                    if (file.deleteRecursively()) count++
+                }
+                val downloadDir = DownloadService.getDownloadDirectory(getApplication())
+                downloadDir.listFiles()?.filter { it.name.endsWith(".part") || it.name.endsWith(".ytdl") }?.forEach {
+                    freedBytes += it.length()
+                    if (it.delete()) count++
+                }
+                val mb = freedBytes / (1024.0 * 1024.0)
+                AppLogger.i("System", "✔ Cleared $count files (freed %.2f MB)".format(mb))
+            } catch (e: Exception) {
+                AppLogger.e("System", "✘ Clear cache error: ${e.message}")
+            }
+        }
+    }
+
+    fun pingYouTube() {
+        viewModelScope.launch(Dispatchers.IO) {
+            AppLogger.i("Network", "🌐 Testing YouTube connectivity & DNS latency...")
+            try {
+                val start = System.currentTimeMillis()
+                val url = java.net.URL("https://www.youtube.com/generate_204")
+                val conn = url.openConnection() as java.net.HttpURLConnection
+                conn.connectTimeout = 8000
+                conn.readTimeout = 8000
+                conn.requestMethod = "GET"
+                val code = conn.responseCode
+                val latency = System.currentTimeMillis() - start
+                AppLogger.i("Network", "✔ YouTube HTTP Response: $code (Latency: ${latency}ms)")
+            } catch (e: Exception) {
+                AppLogger.e("Network", "✘ YouTube unreachable: ${e.message}")
+            }
+        }
+    }
+
+    fun getDiagnosticReport(): String = AppLogger.getDiagnosticReport(getApplication())
 
     override fun onCleared() {
         try {

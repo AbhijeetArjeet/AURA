@@ -52,12 +52,21 @@ private val LiquidNeonOrange = Color(0xFFFF6B2B)
 private val LiquidCyan     = Color(0xFF00E5FF)
 private val LiquidPurple   = Color(0xFF9D4EDD)
 
+// 8MAN Hachiman Aesthetic (Dead-Fish Eyes & Service Club Matrix)
+private val HachimanGreen  = Color(0xFF00FF66)
+private val HachimanCyan   = Color(0xFF00E5FF)
+private val HachimanPurple = Color(0xFF9D4EDD)
+private val HachimanDark   = Color(0xFF070913)
+
 private val TextPure       = Color(0xFFFFFFFF)
 private val TextMuted      = Color(0xFFA0A5B8)
 private val TextDim        = Color(0xFF6B7280)
 
 private val RedGradient = Brush.horizontalGradient(
     listOf(LiquidNeonRed, LiquidNeonOrange)
+)
+private val HachimanGradient = Brush.horizontalGradient(
+    listOf(Color(0xFF00E5FF), Color(0xFF00FF66))
 )
 private val GlassGradient = Brush.verticalGradient(
     listOf(Color.White.copy(alpha = 0.10f), Color.White.copy(alpha = 0.02f))
@@ -106,9 +115,13 @@ fun YPDlpApp(
     val ui by vm.ui.collectAsStateWithLifecycle()
     val queue by vm.queue.collectAsStateWithLifecycle()
     val playerState by vm.playerState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     var selectedTab by remember { mutableIntStateOf(0) }
     var showSettingsDialog by remember { mutableStateOf(false) }
+
+    var logoTapCount by remember { mutableIntStateOf(0) }
+    var lastLogoTapTime by remember { mutableLongStateOf(0L) }
 
     LaunchedEffect(prefilledUrl) {
         prefilledUrl?.let {
@@ -120,12 +133,37 @@ fun YPDlpApp(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MeshBackgroundGradient)
+            .background(if (ui.isHachimanMode) Brush.verticalGradient(listOf(Color(0xFF070B14), Color(0xFF04060A))) else MeshBackgroundGradient)
     ) {
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
                 GlassTopBar(
+                    isHachimanMode = ui.isHachimanMode,
+                    onLogoClick = {
+                        val now = System.currentTimeMillis()
+                        if (now - lastLogoTapTime > 2500) {
+                            logoTapCount = 1
+                        } else {
+                            logoTapCount++
+                        }
+                        lastLogoTapTime = now
+
+                        if (logoTapCount >= 5) {
+                            logoTapCount = 0
+                            val enabled = vm.toggleHachimanMode()
+                            if (enabled) {
+                                selectedTab = 3 // Switch directly to 8MAN Console
+                                Toast.makeText(context, "★ 8MAN Mode Activated! 'Youth is a lie. It is evil.'", Toast.LENGTH_LONG).show()
+                            } else {
+                                if (selectedTab == 3) selectedTab = 0
+                                Toast.makeText(context, "❄ Yukino Mode Restored: 'Being hated is not a virtue.'", Toast.LENGTH_LONG).show()
+                            }
+                        } else if (logoTapCount in 2..4) {
+                            val remaining = 5 - logoTapCount
+                            Toast.makeText(context, "Tap $remaining more times for 8MAN Mode...", Toast.LENGTH_SHORT).show()
+                        }
+                    },
                     onSettingsClick = { showSettingsDialog = true }
                 )
             },
@@ -149,14 +187,15 @@ fun YPDlpApp(
                         }
                     }
 
-                    // iOS Glass Capsule Bottom Navigation
+                    // iOS Glass Capsule Bottom Navigation (with 8MAN Console tab if active)
                     GlassBottomNav(
                         selected = selectedTab,
                         onSelect = { selectedTab = it },
                         queueBadgeCount = queue.count {
                             it.status == DownloadStatus.DOWNLOADING || it.status == DownloadStatus.QUEUED
                         },
-                        downloadsCount = ui.downloadedFiles.size
+                        downloadsCount = ui.downloadedFiles.size,
+                        isHachimanMode = ui.isHachimanMode
                     )
                 }
             }
@@ -178,6 +217,7 @@ fun YPDlpApp(
                         0 -> DownloadTab(ui = ui, vm = vm)
                         1 -> QueueTab(queue = queue, vm = vm)
                         2 -> LibraryTab(ui = ui, vm = vm)
+                        3 -> HachimanConsoleTab(ui = ui, vm = vm)
                     }
                 }
             }
@@ -198,37 +238,47 @@ fun YPDlpApp(
 }
 
 // ────────────────────────────────────────────────────────────────────
-//  Glass Top Bar with Glow & Settings
+//  Glass Top Bar with Glow, Hachiman Switch & Settings
 // ────────────────────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GlassTopBar(onSettingsClick: () -> Unit) {
+fun GlassTopBar(
+    isHachimanMode: Boolean = false,
+    onLogoClick: () -> Unit = {},
+    onSettingsClick: () -> Unit
+) {
     TopAppBar(
         title = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable(onClick = onLogoClick)
+                    .padding(end = 8.dp)
+            ) {
                 Image(
-                    painter = painterResource(R.drawable.app_logo),
-                    contentDescription = "YPDlp Logo",
+                    painter = painterResource(if (isHachimanMode) R.drawable.hachiman_logo else R.drawable.app_logo),
+                    contentDescription = "App Logo",
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(38.dp)
                         .clip(CircleShape)
-                        .border(1.5.dp, LiquidNeonRed, CircleShape),
+                        .border(1.8.dp, if (isHachimanMode) HachimanGreen else LiquidNeonRed, CircleShape),
                     contentScale = ContentScale.Crop
                 )
                 Spacer(Modifier.width(10.dp))
                 Column {
                     Text(
-                        "YPDlp",
+                        if (isHachimanMode) "8MAN Console" else "YPDlp",
                         fontWeight = FontWeight.Black,
-                        fontSize = 20.sp,
+                        fontSize = 19.sp,
                         color = TextPure,
                         letterSpacing = 0.5.sp
                     )
                     Text(
-                        "Liquid Crystal Edition",
+                        if (isHachimanMode) "「本物が欲しい」Service Club Edition" else "Liquid Crystal Edition",
                         fontSize = 10.sp,
-                        color = LiquidCyan,
-                        fontWeight = FontWeight.Medium
+                        color = if (isHachimanMode) HachimanGreen else LiquidCyan,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
@@ -247,7 +297,7 @@ fun GlassTopBar(onSettingsClick: () -> Unit) {
                 Icon(
                     Icons.Outlined.Settings,
                     contentDescription = "Settings",
-                    tint = TextMuted,
+                    tint = if (isHachimanMode) HachimanGreen else TextMuted,
                     modifier = Modifier.size(18.dp)
                 )
             }
@@ -263,21 +313,24 @@ fun GlassBottomNav(
     selected: Int,
     onSelect: (Int) -> Unit,
     queueBadgeCount: Int,
-    downloadsCount: Int
+    downloadsCount: Int,
+    isHachimanMode: Boolean = false
 ) {
+    val activeGrad = if (isHachimanMode) HachimanGradient else RedGradient
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 12.dp)
+            .padding(horizontal = 14.dp, vertical = 10.dp)
     ) {
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(64.dp)
-                .shadow(16.dp, RoundedCornerShape(32.dp), ambientColor = LiquidNeonRed.copy(alpha = 0.3f)),
+                .shadow(16.dp, RoundedCornerShape(32.dp), ambientColor = if (isHachimanMode) HachimanGreen.copy(alpha = 0.3f) else LiquidNeonRed.copy(alpha = 0.3f)),
             shape = RoundedCornerShape(32.dp),
-            color = Color(0xFF141724).copy(alpha = 0.88f),
-            border = BorderStroke(1.dp, GlassHighlight)
+            color = Color(0xFF101320).copy(alpha = 0.92f),
+            border = BorderStroke(1.dp, if (isHachimanMode) HachimanGreen.copy(alpha = 0.3f) else GlassHighlight)
         ) {
             Row(
                 modifier = Modifier.fillMaxSize(),
@@ -288,6 +341,7 @@ fun GlassBottomNav(
                     selected = selected == 0,
                     icon = Icons.Filled.Download,
                     label = "Download",
+                    activeGradient = activeGrad,
                     onClick = { onSelect(0) }
                 )
                 NavCapsuleItem(
@@ -295,6 +349,7 @@ fun GlassBottomNav(
                     icon = Icons.Filled.FormatListBulleted,
                     label = "Queue",
                     badge = if (queueBadgeCount > 0) "$queueBadgeCount" else null,
+                    activeGradient = activeGrad,
                     onClick = { onSelect(1) }
                 )
                 NavCapsuleItem(
@@ -302,8 +357,19 @@ fun GlassBottomNav(
                     icon = Icons.Filled.VideoLibrary,
                     label = "Downloads",
                     badge = if (downloadsCount > 0) "$downloadsCount" else null,
+                    activeGradient = activeGrad,
                     onClick = { onSelect(2) }
                 )
+                if (isHachimanMode) {
+                    NavCapsuleItem(
+                        selected = selected == 3,
+                        icon = Icons.Filled.Terminal,
+                        label = "8MAN",
+                        badge = "DEV",
+                        activeGradient = HachimanGradient,
+                        onClick = { onSelect(3) }
+                    )
+                }
             }
         }
     }
@@ -315,9 +381,9 @@ fun NavCapsuleItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     badge: String? = null,
+    activeGradient: Brush = RedGradient,
     onClick: () -> Unit
 ) {
-    val bgAlpha by animateFloatAsState(if (selected) 1f else 0f, label = "navBg")
     val scale by animateFloatAsState(if (selected) 1.06f else 1f, label = "navScale")
 
     Box(
@@ -328,10 +394,10 @@ fun NavCapsuleItem(
             }
             .clip(RoundedCornerShape(24.dp))
             .background(
-                if (selected) RedGradient else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent))
+                if (selected) activeGradient else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent))
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 12.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -339,7 +405,7 @@ fun NavCapsuleItem(
                 badge = {
                     badge?.let {
                         Badge(containerColor = if (selected) Color.White else LiquidNeonRed) {
-                            Text(it, color = if (selected) LiquidNeonRed else Color.White, fontSize = 9.sp)
+                            Text(it, color = if (selected) Color.Black else Color.White, fontSize = 8.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -347,17 +413,17 @@ fun NavCapsuleItem(
                 Icon(
                     icon,
                     contentDescription = label,
-                    tint = if (selected) Color.White else TextMuted,
-                    modifier = Modifier.size(20.dp)
+                    tint = if (selected) Color.Black else TextMuted,
+                    modifier = Modifier.size(19.dp)
                 )
             }
             if (selected) {
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(6.dp))
                 Text(
                     label,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp,
-                    color = Color.White
+                    fontSize = 11.sp,
+                    color = Color.Black
                 )
             }
         }
@@ -1439,3 +1505,400 @@ fun shareMediaFile(context: Context, file: File) {
         Toast.makeText(context, "Cannot share file: ${e.message}", Toast.LENGTH_SHORT).show()
     }
 }
+
+// ────────────────────────────────────────────────────────────────────
+//  8MAN Dev Console & Terminal Section (Hachiman Mode)
+// ────────────────────────────────────────────────────────────────────
+@Composable
+fun HachimanConsoleTab(ui: UiState, vm: MainViewModel) {
+    val logs by vm.consoleLogs.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(logs.size) {
+        if (logs.isNotEmpty()) {
+            listState.animateScrollToItem(logs.size - 1)
+        }
+    }
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp),
+        contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        // ── 1. Hachiman Hero Header Banner ──
+        item {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(16.dp, RoundedCornerShape(24.dp), ambientColor = HachimanGreen.copy(alpha = 0.3f)),
+                shape = RoundedCornerShape(24.dp),
+                color = Color(0xFF0C101A).copy(alpha = 0.90f),
+                border = BorderStroke(1.dp, HachimanGreen.copy(alpha = 0.4f))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.hachiman_logo),
+                        contentDescription = "8MAN",
+                        modifier = Modifier
+                            .size(68.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .border(1.5.dp, HachimanGreen, RoundedCornerShape(16.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                    Spacer(Modifier.width(14.dp))
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                "8MAN Dev Console",
+                                fontWeight = FontWeight.Black,
+                                fontSize = 16.sp,
+                                color = TextPure
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = HachimanGreen.copy(alpha = 0.15f),
+                                border = BorderStroke(1.dp, HachimanGreen.copy(alpha = 0.4f))
+                            ) {
+                                Text(
+                                    "ACTIVE",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = HachimanGreen,
+                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                        Text(
+                            "「本物が欲しい」— Service Club Diagnostic Suite",
+                            fontSize = 11.sp,
+                            color = HachimanCyan,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            "\"Youth is a lie. It is evil. Hard work betrays plenty of dreams.\"",
+                            fontSize = 10.sp,
+                            color = TextMuted,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
+        }
+
+        // ── 2. Quick Action Buttons ──
+        item {
+            LiquidGlassCard {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        "🛠️ Quick Diagnostics & Actions",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        color = TextPure
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        ActionChipGlass(
+                            icon = Icons.Filled.ContentCopy,
+                            label = "Copy Full Log",
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                val report = vm.getDiagnosticReport()
+                                clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(report))
+                                Toast.makeText(context, "Full diagnostic report copied to clipboard!", Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                        ActionChipGlass(
+                            icon = Icons.Filled.RestartAlt,
+                            label = "Re-Init Engine",
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                vm.forceReinitEngine()
+                                Toast.makeText(context, "Engine re-initialized!", Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        ActionChipGlass(
+                            icon = Icons.Filled.CleaningServices,
+                            label = "Purge Cache",
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                vm.clearTempCache()
+                                Toast.makeText(context, "Cache purged!", Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                        ActionChipGlass(
+                            icon = Icons.Filled.NetworkCheck,
+                            label = "Ping YouTube",
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                vm.pingYouTube()
+                            }
+                        )
+                        ActionChipGlass(
+                            icon = Icons.Filled.Delete,
+                            label = "Clear",
+                            modifier = Modifier.weight(0.7f),
+                            onClick = {
+                                vm.clearConsoleLogs()
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
+        // ── 3. Quick Command Shell Bar ──
+        item {
+            LiquidGlassCard {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "💻 Interactive 8MAN Shell",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = HachimanGreen
+                        )
+                        Text(
+                            "yt-dlp v2024+",
+                            fontSize = 10.sp,
+                            color = TextDim,
+                            fontFamily = FontFamily.Monospace
+                        )
+                    }
+
+                    // Shell Command Quick Chips
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        val quickCmds = listOf("help", "diag", "ping", "8man", "reinit", "clearcache")
+                        items(quickCmds) { cmd ->
+                            Surface(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable {
+                                        vm.setTerminalInput(cmd)
+                                        vm.executeTerminalCommand()
+                                    },
+                                shape = RoundedCornerShape(8.dp),
+                                color = HachimanGreen.copy(alpha = 0.12f),
+                                border = BorderStroke(1.dp, HachimanGreen.copy(alpha = 0.3f))
+                            ) {
+                                Text(
+                                    "> $cmd",
+                                    fontSize = 11.sp,
+                                    fontFamily = FontFamily.Monospace,
+                                    color = HachimanGreen,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    // Command Input Field
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = ui.terminalInput,
+                            onValueChange = vm::setTerminalInput,
+                            placeholder = {
+                                Text(
+                                    "Enter command (e.g. diag, ping, info <url>)",
+                                    color = TextDim,
+                                    fontSize = 12.sp,
+                                    fontFamily = FontFamily.Monospace
+                                )
+                            },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = HachimanGreen,
+                                unfocusedBorderColor = GlassBorder,
+                                focusedTextColor = HachimanGreen,
+                                unfocusedTextColor = TextPure,
+                                cursorColor = HachimanGreen,
+                                focusedContainerColor = Color(0xFF080B12),
+                                unfocusedContainerColor = Color(0xFF080B12)
+                            ),
+                            textStyle = androidx.compose.ui.text.TextStyle(
+                                fontFamily = FontFamily.Monospace,
+                                fontSize = 12.sp
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+
+                        Button(
+                            onClick = vm::executeTerminalCommand,
+                            enabled = !ui.isRunningCommand && ui.terminalInput.isNotBlank(),
+                            colors = ButtonDefaults.buttonColors(containerColor = HachimanGreen),
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp)
+                        ) {
+                            if (ui.isRunningCommand) {
+                                CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.Black, strokeWidth = 2.dp)
+                            } else {
+                                Text("RUN", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── 4. Live Terminal Console Window ──
+        item {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(380.dp)
+                    .shadow(16.dp, RoundedCornerShape(18.dp)),
+                shape = RoundedCornerShape(18.dp),
+                color = Color(0xFF07090F),
+                border = BorderStroke(1.dp, Color(0xFF00FF66).copy(alpha = 0.35f))
+            ) {
+                Column(Modifier.fillMaxSize()) {
+                    // Terminal Titlebar
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Color(0xFF0F1420),
+                        border = BorderStroke(0.5.dp, GlassBorder)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                                .fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Box(Modifier.size(10.dp).clip(CircleShape).background(Color(0xFFFF5F56)))
+                                Box(Modifier.size(10.dp).clip(CircleShape).background(Color(0xFFFFBD2E)))
+                                Box(Modifier.size(10.dp).clip(CircleShape).background(Color(0xFF27C93F)))
+                            }
+                            Text(
+                                "8man@sobu-high: /dev/pts/0",
+                                fontSize = 11.sp,
+                                fontFamily = FontFamily.Monospace,
+                                color = TextMuted,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                "${logs.size} lines",
+                                fontSize = 10.sp,
+                                fontFamily = FontFamily.Monospace,
+                                color = TextDim
+                            )
+                        }
+                    }
+
+                    // Terminal Logs Output
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                    ) {
+                        items(logs, key = { it.id }) { entry ->
+                            TerminalLineItem(entry = entry)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TerminalLineItem(entry: LogEntry) {
+    val (lvlColor, lvlText) = when (entry.level) {
+        LogLevel.INFO -> Color(0xFF00FF66) to "INF"
+        LogLevel.DEBUG -> Color(0xFF00E5FF) to "DBG"
+        LogLevel.WARN -> Color(0xFFFFB300) to "WRN"
+        LogLevel.ERROR -> Color(0xFFFF3366) to "ERR"
+        LogLevel.COMMAND -> Color(0xFFB388FF) to "CMD"
+    }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Top
+    ) {
+        Text(
+            entry.timestamp,
+            fontSize = 10.sp,
+            fontFamily = FontFamily.Monospace,
+            color = TextDim,
+            modifier = Modifier.padding(end = 6.dp)
+        )
+        Text(
+            "[$lvlText]",
+            fontSize = 10.sp,
+            fontFamily = FontFamily.Monospace,
+            color = lvlColor,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(end = 6.dp)
+        )
+        Text(
+            entry.message,
+            fontSize = 11.sp,
+            fontFamily = FontFamily.Monospace,
+            color = if (entry.level == LogLevel.ERROR) Color(0xFFFF5252) else if (entry.level == LogLevel.COMMAND) Color(0xFFE1BEE7) else Color(0xFFD6DBE8),
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+fun ActionChipGlass(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
+        color = GlassCard,
+        border = BorderStroke(1.dp, GlassBorder)
+    ) {
+        Row(
+            modifier = Modifier.padding(vertical = 8.dp, horizontal = 6.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(icon, contentDescription = label, tint = LiquidCyan, modifier = Modifier.size(15.dp))
+            Spacer(Modifier.width(6.dp))
+            Text(
+                label,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = TextPure,
+                maxLines = 1
+            )
+        }
+    }
+}
+

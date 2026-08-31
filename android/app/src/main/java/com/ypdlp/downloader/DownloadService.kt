@@ -114,8 +114,10 @@ class DownloadService : Service() {
     private suspend fun runOnDeviceDownload(req: DownloadRequest, item: DownloadItem, outDir: File): Boolean = withContext(Dispatchers.IO) {
         try {
             updateItem(item.id) { it.copy(speed = "Starting on-device…", eta = "") }
+            AppLogger.i("Download", "▶ Starting on-device download: ${req.url} [${req.quality} ${req.container}]")
             val isInit = YPDlpApp.ensureInitialized(applicationContext)
             if (!isInit) {
+                AppLogger.e("Engine", "Engine initialization failed")
                 throw IllegalStateException("Failed to initialize on-device YoutubeDL engine")
             }
 
@@ -156,6 +158,7 @@ class DownloadService : Service() {
             val etaPattern = Pattern.compile("ETA\\s+([\\d:]+)")
 
             YoutubeDL.getInstance().execute(ytdlRequest, req.id) { progress, etaInSeconds, line ->
+                AppLogger.d("yt-dlp", line)
                 val mPct = pctPattern.matcher(line)
                 val mSpeed = speedPattern.matcher(line)
                 val mEta = etaPattern.matcher(line)
@@ -189,6 +192,7 @@ class DownloadService : Service() {
                 ) { _, _ -> }
             }
 
+            AppLogger.i("Download", "✔ Download complete: ${latestFile?.name ?: "Finished"}")
             updateItem(item.id) {
                 it.copy(
                     status = DownloadStatus.DONE,
@@ -202,10 +206,12 @@ class DownloadService : Service() {
             true
         } catch (e: CancellationException) {
             YoutubeDL.getInstance().destroyProcessById(req.id)
+            AppLogger.w("Download", "Download cancelled: ${req.id}")
             updateItem(item.id) { it.copy(status = DownloadStatus.CANCELLED) }
             false
         } catch (e: Exception) {
             Log.e(TAG, "On-device download error: ${e.message}", e)
+            AppLogger.e("Download", "✘ Download error: ${e.message}")
             updateItem(item.id) {
                 it.copy(
                     status = DownloadStatus.ERROR,
