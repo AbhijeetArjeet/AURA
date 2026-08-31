@@ -7,16 +7,22 @@ echo   YPDlp — Build Installable Android APK
 echo ============================================
 echo.
 
-:: Check Java
-java -version >nul 2>&1
+:: Automatically detect Android Studio JDK if system Java is version 24+
+if exist "C:\Program Files\Android\Android Studio\jbr\bin\java.exe" (
+    set "JAVA_HOME=C:\Program Files\Android\Android Studio\jbr"
+    set "PATH=%JAVA_HOME%\bin;%PATH%"
+    echo [+] Using Android Studio JDK 21: %JAVA_HOME%
+)
+
+:: Verify Java version
+java -version
 if %errorlevel% neq 0 (
-    echo [ERROR] Java is not installed or not in PATH.
-    echo Please install JDK 17 or JDK 21.
+    echo [ERROR] Java JDK is required to build the Android APK.
     pause
     exit /b 1
 )
 
-echo [+] Java found.
+echo.
 echo [+] Building universal APK with Gradle...
 echo.
 
