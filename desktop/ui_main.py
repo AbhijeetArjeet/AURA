@@ -7,14 +7,15 @@ from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QComboBox, QProgressBar,
     QScrollArea, QFrame, QFileDialog, QMessageBox,
-    QStatusBar, QSizePolicy, QApplication
+    QStatusBar, QApplication
 )
-from PyQt6.QtCore import Qt, QSize, QTimer
-from PyQt6.QtGui import QPixmap, QFont, QIcon, QColor, QPalette, QCursor
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QPixmap, QFont
 
+import ffmpeg_utils
 from downloader import (
     DownloadWorker, InfoWorker,
-    QUALITY_MAP, AUDIO_FORMATS, FORMAT_MAP
+    QUALITY_MAP, clean_url
 )
 from thumbnail_loader import ThumbnailLoader
 from ui_settings import SettingsDialog, load_settings
@@ -124,6 +125,7 @@ class QueueCard(QFrame):
         self.quality       = quality
         self.thumbnail_url = thumbnail_url
         self.worker        = None
+        self.state         = "QUEUED"  # "QUEUED", "RUNNING", "DONE", "CANCELLED"
         self._build_ui()
 
     def _build_ui(self):
@@ -203,6 +205,7 @@ class QueueCard(QFrame):
         self.speed_lbl.setText(speed)
 
     def set_done(self, success: bool, msg: str):
+        self.state = "DONE" if success else "CANCELLED"
         self.prog_bar.setValue(100 if success else self.prog_bar.value())
         self.status_lbl.setText("✔ Done" if success else f"✘ {msg}")
         self.status_lbl.setStyleSheet(
@@ -224,18 +227,24 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("YPDlp — YouTube Downloader")
-        self.resize(900, 700)
-        self.setMinimumSize(720, 560)
+        self.resize(920, 720)
+        self.setMinimumSize(740, 580)
         self.setStyleSheet(STYLE)
 
-        self._settings    = load_settings()
-        self._info_worker = None
+        self._settings     = load_settings()
+        self._info_worker  = None
         self._thumb_worker = None
         self._current_info = None
         self._queue_cards  = []
 
         self._build_ui()
-        self._status_bar.showMessage("Ready. Paste a YouTube URL above to get started.")
+        
+        # Verify FFmpeg status
+        ff = ffmpeg_utils.get_ffmpeg_path(self._settings.get("ffmpeg_path", ""))
+        if ff:
+            self._status_bar.showMessage("Ready. FFmpeg active. Paste a YouTube URL above to get started.")
+        else:
+            self._status_bar.showMessage("Ready. Paste a YouTube URL above to get started.")
 
     # ─────────────────────────────────────────
     #  Build UI
@@ -381,8 +390,7 @@ class MainWindow(QMainWindow):
         hl.addWidget(QLabel("Quality:"))
         self._qual_combo = QComboBox()
         self._qual_combo.addItems(list(QUALITY_MAP.keys()))
-        # default
-        idx = self._qual_combo.findText(self._settings["default_quality"])
+        idx = self._qual_combo.findText(self._settings.get("default_quality", "1080p"))
         if idx >= 0:
             self._qual_combo.setCurrentIndex(idx)
         hl.addWidget(self._qual_combo)
@@ -394,7 +402,7 @@ class MainWindow(QMainWindow):
         hl.addStretch()
 
         # Output folder
-        self._folder_lbl = QLabel(self._short_path(self._settings["output_dir"]))
+        self._folder_lbl = QLabel(self._short_path(self._settings.get("output_dir", "")))
         self._folder_lbl.setStyleSheet("color:#888; font-size:11px;")
         hl.addWidget(self._folder_lbl)
 
@@ -475,18 +483,19 @@ class MainWindow(QMainWindow):
             self._qual_combo.setEnabled(True)
 
         # Restore user default if matches
-        dfmt = self._settings["default_format"]
+        dfmt = self._settings.get("default_format", "MP4")
         idx = self._fmt_combo.findText(dfmt)
         if idx >= 0:
             self._fmt_combo.setCurrentIndex(idx)
 
     def _fetch_info(self):
-        url = self._url_edit.text().strip()
+        raw_url = self._url_edit.text().strip()
+        url = clean_url(raw_url)
         if not url:
             return
         self._fetch_btn.setEnabled(False)
         self._fetch_btn.setText("Fetching…")
-        self._title_lbl.setText("Loading…")
+        self._title_lbl.setText("Loading metadata…")
         self._channel_lbl.setText("")
         self._duration_lbl.setText("")
         self._views_lbl.setText("")
@@ -507,11 +516,13 @@ class MainWindow(QMainWindow):
         thumb_url= info.get("thumbnail", "")
 
         self._title_lbl.setText(title)
-        self._channel_lbl.setText(f"📺  {channel}")
-        mins, secs = divmod(int(duration or 0), 60)
-        hrs,  mins = divmod(mins, 60)
-        dur_str = f"{hrs:02d}:{mins:02d}:{secs:02d}" if hrs else f"{mins:02d}:{secs:02d}"
-        self._duration_lbl.setText(f"⏱️  {dur_str}")
+        if channel:
+            self._channel_lbl.setText(f"📺  {channel}")
+        if duration:
+            mins, secs = divmod(int(duration), 60)
+            hrs,  mins = divmod(mins, 60)
+            dur_str = f"{hrs:02d}:{mins:02d}:{secs:02d}" if hrs else f"{mins:02d}:{secs:02d}"
+            self._duration_lbl.setText(f"⏱️  {dur_str}")
         if views:
             self._views_lbl.setText(f"👁️  {views:,} views")
 
@@ -548,7 +559,7 @@ class MainWindow(QMainWindow):
         url      = self._url_edit.text().strip()
         title    = self._current_info.get("title", "Unknown")
         fmt      = self._fmt_combo.currentText()
-        quality  = self._qual_combo.currentText()
+        quality  = self._qual_combo.currentText() if self._type_combo.currentText() != "Audio Only" else "Best"
         thumb    = self._current_info.get("thumbnail", "")
 
         card = QueueCard(url, title, fmt, quality, thumb, self)
@@ -566,17 +577,33 @@ class MainWindow(QMainWindow):
             tw.loaded.connect(card.set_thumbnail)
             tw.start()
 
-        self._start_download(card)
+        self._process_queue()
         self._status_bar.showMessage(f"Added to queue: {title}")
+
+    def _process_queue(self):
+        """Schedule and run queued downloads according to max_concurrent setting."""
+        max_c = self._settings.get("max_concurrent", 2)
+        running = [c for c in self._queue_cards if c.state == "RUNNING"]
+
+        for card in self._queue_cards:
+            if len(running) >= max_c:
+                break
+            if card.state == "QUEUED":
+                card.state = "RUNNING"
+                running.append(card)
+                self._start_download(card)
 
     def _start_download(self, card: QueueCard):
         settings = self._settings
+        output_dir = settings.get("output_dir", os.path.join(os.path.expanduser("~"), "Downloads"))
+        os.makedirs(output_dir, exist_ok=True)
+
         worker = DownloadWorker(
             url             = card.url,
-            output_dir      = settings["output_dir"],
+            output_dir      = output_dir,
             container       = card.fmt,
             quality         = card.quality,
-            ffmpeg_location = settings["ffmpeg_path"],
+            ffmpeg_location = settings.get("ffmpeg_path", ""),
             parent          = card,
         )
         card.worker = worker
@@ -589,17 +616,17 @@ class MainWindow(QMainWindow):
 
     def _on_download_done(self, card: QueueCard, success: bool, msg: str):
         card.set_done(success, msg)
-        done = sum(1 for c in self._queue_cards
-                   if not (c.worker and c.worker.isRunning()))
+        done = sum(1 for c in self._queue_cards if c.state in ("DONE", "CANCELLED"))
         total = len(self._queue_cards)
         self._status_bar.showMessage(
             f"{'✔' if success else '✘'} {card.title[:40]} — {msg}  "
             f"({done}/{total} finished)"
         )
+        # Process next queued item
+        self._process_queue()
 
     def _clear_done(self):
-        to_remove = [c for c in self._queue_cards
-                     if not (c.worker and c.worker.isRunning())]
+        to_remove = [c for c in self._queue_cards if c.state in ("DONE", "CANCELLED")]
         for c in to_remove:
             self._queue_layout.removeWidget(c)
             c.deleteLater()
@@ -608,9 +635,8 @@ class MainWindow(QMainWindow):
             self._empty_lbl.setVisible(True)
 
     def _pick_folder(self):
-        d = QFileDialog.getExistingDirectory(
-            self, "Select Output Folder", self._settings["output_dir"]
-        )
+        curr = self._settings.get("output_dir", os.path.join(os.path.expanduser("~"), "Downloads"))
+        d = QFileDialog.getExistingDirectory(self, "Select Output Folder", curr)
         if d:
             self._settings["output_dir"] = d
             self._folder_lbl.setText(self._short_path(d))
@@ -619,10 +645,13 @@ class MainWindow(QMainWindow):
         dlg = SettingsDialog(self)
         if dlg.exec():
             self._settings = load_settings()
-            self._folder_lbl.setText(self._short_path(self._settings["output_dir"]))
+            self._folder_lbl.setText(self._short_path(self._settings.get("output_dir", "")))
+            self._process_queue()
 
     @staticmethod
     def _short_path(p: str) -> str:
+        if not p:
+            return ""
         home = os.path.expanduser("~")
         if p.startswith(home):
             return "~" + p[len(home):]

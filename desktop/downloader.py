@@ -3,15 +3,15 @@ downloader.py — yt-dlp download engine (runs in a QThread worker)
 """
 import os
 import re
+import urllib.parse
 import yt_dlp
 from PyQt6.QtCore import QThread, pyqtSignal
 
-# ── Hardcoded FFmpeg location (fallback if Settings is empty) ──────────────
-FFMPEG_FALLBACK = r"C:\Users\hp\Downloads\ypdlp\ffmpeg\bin"
+import ffmpeg_utils
 
 
 # ─────────────────────────────────────────────
-#  Helpers
+#  Helpers & Mappings
 # ─────────────────────────────────────────────
 
 FORMAT_MAP = {
@@ -31,12 +31,12 @@ FORMAT_MAP = {
 
 QUALITY_MAP = {
     "Best":         "bestvideo+bestaudio/best",
-    "4K (2160p)":   "bestvideo[height<=2160]+bestaudio/best[height<=2160]",
-    "2K (1440p)":   "bestvideo[height<=1440]+bestaudio/best[height<=1440]",
-    "1080p":        "bestvideo[height<=1080]+bestaudio/best[height<=1080]",
-    "720p":         "bestvideo[height<=720]+bestaudio/best[height<=720]",
-    "480p":         "bestvideo[height<=480]+bestaudio/best[height<=480]",
-    "360p":         "bestvideo[height<=360]+bestaudio/best[height<=360]",
+    "4K (2160p)":   "bestvideo[height<=2160]+bestaudio/best[height<=2160]/best",
+    "2K (1440p)":   "bestvideo[height<=1440]+bestaudio/best[height<=1440]/best",
+    "1080p":        "bestvideo[height<=1080]+bestaudio/best[height<=1080]/best",
+    "720p":         "bestvideo[height<=720]+bestaudio/best[height<=720]/best",
+    "480p":         "bestvideo[height<=480]+bestaudio/best[height<=480]/best",
+    "360p":         "bestvideo[height<=360]+bestaudio/best[height<=360]/best",
 }
 
 AUDIO_QUALITIES = {
@@ -51,17 +51,38 @@ AUDIO_QUALITIES = {
 AUDIO_FORMATS = {"MP3", "M4A", "FLAC", "WAV", "OGG", "OPUS"}
 
 
+def clean_url(url: str) -> str:
+    """Sanitize URL and normalize YouTube URLs."""
+    url = url.strip()
+    if not url:
+        return ""
+    
+    # Handle YouTube shorts
+    if "youtube.com/shorts/" in url:
+        video_id = url.split("youtube.com/shorts/")[1].split("?")[0].split("/")[0]
+        return f"https://www.youtube.com/watch?v={video_id}"
+    
+    return url
+
+
 # ─────────────────────────────────────────────
 #  Metadata fetcher (blocking, run in thread)
 # ─────────────────────────────────────────────
 
 def fetch_info(url: str) -> dict:
     """Return video metadata without downloading."""
+    url = clean_url(url)
     ydl_opts = {
         "quiet": True,
         "no_warnings": True,
         "skip_download": True,
         "noplaylist": True,
+        "extract_flat": False,
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["web", "mweb", "android", "ios"]
+            }
+        },
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
@@ -96,38 +117,50 @@ class DownloadWorker(QThread):
         parent=None,
     ):
         super().__init__(parent)
-        self.url            = url
-        self.output_dir     = output_dir
-        self.container      = container.upper()
-        self.quality        = quality
-        self.audio_quality  = audio_quality
+        self.url             = clean_url(url)
+        self.output_dir      = output_dir
+        self.container       = container.upper()
+        self.quality         = quality
+        self.audio_quality   = audio_quality
         self.ffmpeg_location = ffmpeg_location
-        self._cancelled     = False
+        self._cancelled      = False
 
     # ── cancel ──────────────────────────────
     def cancel(self):
         self._cancelled = True
-        self.terminate()
 
     # ── progress hook ────────────────────────
     def _progress_hook(self, d):
         if self._cancelled:
-            raise yt_dlp.utils.DownloadCancelled()
+            raise yt_dlp.utils.DownloadCancelled("Download cancelled by user.")
 
         if d["status"] == "downloading":
-            raw_percent = d.get("_percent_str", "0%").strip()
-            pct = int(float(re.sub(r"[^\d.]", "", raw_percent) or 0))
+            pct = 0
+            downloaded = d.get("downloaded_bytes", 0)
+            total = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
+            if total > 0:
+                pct = int((downloaded / total) * 100)
+            else:
+                raw_percent = d.get("_percent_str", "0%").strip()
+                # Strip ANSI color codes if any
+                clean_percent = re.sub(r"\x1b\[[0-9;]*m", "", raw_percent)
+                match = re.search(r"([\d.]+)", clean_percent)
+                pct = int(float(match.group(1))) if match else 0
+
             speed = d.get("_speed_str", "--").strip()
+            speed = re.sub(r"\x1b\[[0-9;]*m", "", speed)
             eta   = d.get("_eta_str",   "--").strip()
-            self.progress.emit(pct, speed, eta)
+            eta   = re.sub(r"\x1b\[[0-9;]*m", "", eta)
+
+            self.progress.emit(min(max(pct, 0), 100), speed, eta)
 
         elif d["status"] == "finished":
-            self.status.emit("Post-processing…")
+            self.status.emit("Processing / Merging…")
 
     # ── build ydl options ────────────────────
     def _build_opts(self) -> dict:
         is_audio = self.container in AUDIO_FORMATS
-
+        os.makedirs(self.output_dir, exist_ok=True)
         outtmpl = os.path.join(self.output_dir, "%(title)s.%(ext)s")
 
         opts: dict = {
@@ -136,30 +169,36 @@ class DownloadWorker(QThread):
             "quiet":           True,
             "no_warnings":     True,
             "noplaylist":      True,
+            "extractor_args": {
+                "youtube": {
+                    "player_client": ["web", "mweb", "android", "ios"]
+                }
+            },
         }
 
-        # Use explicit path → fallback to hardcoded path (if exists) → let yt-dlp find in PATH
-        ffmpeg = self.ffmpeg_location or (FFMPEG_FALLBACK if os.path.exists(FFMPEG_FALLBACK) else "")
-        if ffmpeg and os.path.exists(ffmpeg):
-            opts["ffmpeg_location"] = ffmpeg
+        # Resolve FFmpeg path using our robust detector
+        ffmpeg_bin = ffmpeg_utils.get_ffmpeg_path(self.ffmpeg_location)
+        if ffmpeg_bin and os.path.isfile(ffmpeg_bin):
+            opts["ffmpeg_location"] = ffmpeg_bin
 
         if is_audio:
             aq = AUDIO_QUALITIES.get(self.audio_quality, "0")
-            opts["format"]          = "bestaudio/best"
-            opts["postprocessors"]  = [{
-                "key":            "FFmpegExtractAudio",
-                "preferredcodec": FORMAT_MAP[self.container],
-                "preferredquality": aq,
-            }]
+            opts["format"] = "bestaudio/best"
+            if ffmpeg_bin:
+                opts["postprocessors"] = [{
+                    "key":            "FFmpegExtractAudio",
+                    "preferredcodec": FORMAT_MAP.get(self.container, "mp3"),
+                    "preferredquality": aq,
+                }]
         else:
-            fmt = QUALITY_MAP.get(self.quality, QUALITY_MAP["Best"])
-            ext = FORMAT_MAP[self.container]
-            opts["format"] = fmt
-            opts["merge_output_format"] = ext
-            opts["postprocessors"] = [{
-                "key":              "FFmpegVideoConvertor",
-                "preferedformat":   ext,
-            }]
+            ext = FORMAT_MAP.get(self.container, "mp4")
+            if ffmpeg_bin:
+                fmt = QUALITY_MAP.get(self.quality, QUALITY_MAP["Best"])
+                opts["format"] = fmt
+                opts["merge_output_format"] = ext
+            else:
+                # Fallback format for single-stream if FFmpeg is completely missing
+                opts["format"] = "best[ext=mp4]/best"
 
         return opts
 
@@ -170,7 +209,10 @@ class DownloadWorker(QThread):
             self.status.emit("Starting download…")
             with yt_dlp.YoutubeDL(opts) as ydl:
                 ydl.download([self.url])
-            self.finished.emit(True, "Download complete!")
+            if self._cancelled:
+                self.finished.emit(False, "Cancelled.")
+            else:
+                self.finished.emit(True, "Download complete!")
         except yt_dlp.utils.DownloadCancelled:
             self.finished.emit(False, "Cancelled.")
         except Exception as e:

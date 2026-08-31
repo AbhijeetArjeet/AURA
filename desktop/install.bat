@@ -1,4 +1,7 @@
 @echo off
+setlocal
+cd /d "%~dp0"
+
 echo ============================================
 echo    YPDlp - Installing Dependencies
 echo ============================================
@@ -14,10 +17,14 @@ if %errorlevel% neq 0 (
 )
 
 echo [+] Python found.
-echo [+] Installing packages...
+echo [+] Installing packages and built-in FFmpeg...
 echo.
-pip install --upgrade pip
-pip install -r requirements.txt
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+
+echo.
+echo [+] Verifying environment and FFmpeg...
+python -c "import yt_dlp, PyQt6, PIL, requests, imageio_ffmpeg, ffmpeg_utils; print('[OK] All modules loaded. FFmpeg:', ffmpeg_utils.get_ffmpeg_path())"
 
 echo.
 echo ============================================

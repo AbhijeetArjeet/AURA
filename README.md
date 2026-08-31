@@ -35,24 +35,24 @@ A native Windows desktop application built with **PyQt6** and **yt-dlp**.
 - 🎬 Download videos in MP4, MKV, WebM, AVI
 - 🎵 Download audio in MP3, M4A, FLAC, WAV, OGG, Opus
 - 📺 Quality selection: 4K, 1440p, 1080p, 720p, 480p, 360p
-- 📊 Download queue with progress tracking
-- ⚙️ Settings panel for FFmpeg path and output directory
+- 📊 Download queue with configurable concurrency limit
+- ⚙️ Zero configuration needed — FFmpeg is built-in & auto-managed
 
 ### Run from Source
 ```bash
 cd desktop
-pip install -r requirements.txt
-python main.py
+install.bat
+run.bat
 ```
 
-### Build EXE
+### Build Standalone Release (Zero Dependencies)
 ```bash
 cd desktop
 build.bat
-# Output: desktop/dist/YPDlp/YPDlp.exe
+# Outputs:
+#   Folder: desktop/dist/YPDlp/YPDlp.exe
+#   Zip:    desktop/dist/YPDlp_Windows_x64.zip
 ```
-
-> **Note:** You need [FFmpeg](https://ffmpeg.org/download.html) installed for format conversion.
 
 ---
 
